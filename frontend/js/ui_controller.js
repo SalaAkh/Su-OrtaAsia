@@ -1,22 +1,23 @@
 /**
  * Контроллер интерфейса и реактивной аналитики «Су-Орта Азия».
- * Синхронизирует Three.js сцену, Chart.js графики, слайдеры и WebSocket телеметрию.
+ * Синхронизирует Three.js сцену, Chart.js графики, слайдеры, выноски и Студенческую лабораторию.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Инициализация 3D сцены и физического движка
   const sim = new HydrologySimulationClient();
-  const visualizer = new WaterSimulation3D('canvas-3d');
+  const visualizer = new WaterSimulation3D('canvas-3d', 'scene-callouts-container');
 
-  // DOM Элементы
+  // DOM Элементы управления
   const managementSlider = document.getElementById('management-slider');
   const managementValueBox = document.getElementById('management-value-box');
   const globalUpdateToggle = document.getElementById('global-update-toggle');
   const koshTepaSlider = document.getElementById('kosh-tepa-slider');
   const koshTepaValue = document.getElementById('kosh-tepa-value');
 
-  // Кнопки режимов камеры
-  const btnViewCross = document.getElementById('btn-view-cross');
+  // Кнопки переключения 3D режимов
+  const btnViewDual = document.getElementById('btn-view-dual');
+  const btnViewMorph = document.getElementById('btn-view-morph');
   const btnViewMap = document.getElementById('btn-view-map');
 
   // Кнопки сценариев
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnScenarioLowWater = document.getElementById('sc-low-water');
   const btnScenarioDrought = document.getElementById('sc-drought');
   const btnScenarioKoshTepa = document.getElementById('sc-kosh-tepa');
-  const btnScenarioAccident = document.getElementById('sc-accident');
+  const btnScenarioConsortium = document.getElementById('sc-consortium');
 
   // Метрики нижнего бара
   const metricDepletionRisk = document.getElementById('metric-depletion-risk');
@@ -32,21 +33,52 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricEvapLoss = document.getElementById('metric-evap-loss');
   const metricFiltLoss = document.getElementById('metric-filt-loss');
 
-  // Панель предупреждений
+  // Панель предупреждений и таблица городов
   const alertFeed = document.getElementById('alert-feed');
-
-  // Модальная карточка инспектора IoT
-  const inspectorCard = document.getElementById('inspector-card');
-  const inspectorTitle = document.getElementById('inspector-title');
-  const inspectorFlow = document.getElementById('insp-flow');
-  const inspectorPressure = document.getElementById('insp-pressure');
-  const inspectorMoisture = document.getElementById('insp-moisture');
-  const inspectorSalinity = document.getElementById('insp-salinity');
-  const inspectorLeakProb = document.getElementById('insp-leak-prob');
-  const inspectorClose = document.getElementById('inspector-close');
-
-  // Таблица городов
   const citiesTableBody = document.getElementById('cities-table-body');
+
+  // Модальные окна
+  const btnOpenLab = document.getElementById('btn-open-lab');
+  const btnCloseLab = document.getElementById('btn-close-lab');
+  const labModal = document.getElementById('lab-modal');
+
+  const btnOpenHelp = document.getElementById('btn-open-help');
+  const btnCloseHelp = document.getElementById('btn-close-help');
+  const helpModal = document.getElementById('help-modal');
+
+  if (btnOpenLab && labModal) {
+    btnOpenLab.addEventListener('click', () => labModal.style.display = 'flex');
+  }
+  if (btnCloseLab && labModal) {
+    btnCloseLab.addEventListener('click', () => labModal.style.display = 'none');
+  }
+
+  if (btnOpenHelp && helpModal) {
+    btnOpenHelp.addEventListener('click', () => helpModal.style.display = 'flex');
+  }
+  if (btnCloseHelp && helpModal) {
+    btnCloseHelp.addEventListener('click', () => helpModal.style.display = 'none');
+  }
+
+  window.addEventListener('click', (e) => {
+    if (e.target === labModal) labModal.style.display = 'none';
+    if (e.target === helpModal) helpModal.style.display = 'none';
+  });
+
+  // Вкладки студенческой лаборатории
+  const labTabBtns = document.querySelectorAll('.lab-tab-btn');
+  const labTabContents = document.querySelectorAll('.lab-tab-content');
+
+  labTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      labTabBtns.forEach(b => b.classList.remove('active'));
+      labTabContents.forEach(c => c.style.display = 'none');
+
+      btn.classList.add('active');
+      const targetTab = document.getElementById(btn.dataset.tab);
+      if (targetTab) targetTab.style.display = 'block';
+    });
+  });
 
   // 2. Инициализация графиков Chart.js
   let citiesChart, balanceChart;
@@ -61,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         labels: ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд'],
         datasets: [{
           label: 'Дефицит воды (%)',
-          data: [0, 0, 0, 0, 0],
+          data: [20, 19, 15, 16, 31],
           backgroundColor: ['#ff334b', '#ffaa00', '#0ea5e9', '#10b981', '#a855f7'],
           borderRadius: 4
         }]
@@ -114,14 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncUI() {
     const data = sim.вычислить_баланс();
 
-    // Обновление 3D сцены
+    // Обновление параметров 3D сцены
     visualizer.обновить_параметры(
       sim.уровень_модернизации,
       sim.кош_тепа_отбор_км3,
       sim.засуха
     );
 
-    // Нижние метрики (точно как в image_0.png)
+    // Нижние метрики
     metricDepletionRisk.textContent = data.риск_текст;
     if (sim.уровень_модернизации < 0.25) {
       metricDepletionRisk.className = 'metric-value critical';
@@ -155,10 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         const badgeCol = info.статус === 'КРИТИЧЕСКИЙ' ? 'color: #ff334b;' : (info.статус === 'ТРЕВОГА' ? 'color: #ffaa00;' : 'color: #00ff9d;');
         tr.innerHTML = `
-          <td style="padding: 4px 6px; font-weight: 600;">${c}</td>
-          <td style="padding: 4px 6px; text-align: center; font-family: monospace;">${info.дефицит_процент}%</td>
-          <td style="padding: 4px 6px; text-align: center; font-family: monospace;">${info.дни_до_истощения > 365 ? 'Стабильно' : info.дни_до_истощения + ' дн.'}</td>
-          <td style="padding: 4px 6px; text-align: right; font-weight: 700; ${badgeCol}">${info.статус}</td>
+          <td style="padding: 6px 4px; font-weight: 700;">${c}</td>
+          <td style="padding: 6px 4px; text-align: center; font-family: monospace;">${info.дефицит_процент}%</td>
+          <td style="padding: 6px 4px; text-align: center; font-family: monospace;">${info.дни_до_истощения > 365 ? 'Стабильно' : info.дни_до_истощения + ' дн.'}</td>
+          <td style="padding: 6px 4px; text-align: right; font-weight: 800; ${badgeCol}">${info.статус}</td>
         `;
         citiesTableBody.appendChild(tr);
       });
@@ -182,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.уровень_модернизации = val / 100.0;
     managementValueBox.textContent = val;
     syncUI();
-    sendWebSocketUpdate({ уровень_модернизации: sim.уровень_модернизации });
   });
 
   koshTepaSlider.addEventListener('input', (e) => {
@@ -190,30 +221,39 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.кош_тепа_отбор_км3 = val;
     koshTepaValue.textContent = `${val.toFixed(1)} км³/год`;
     syncUI();
-    sendWebSocketUpdate({ кош_тепа_отбор_км3: val });
   });
 
   globalUpdateToggle.addEventListener('change', (e) => {
     sim.глобальное_обновление = e.target.checked;
   });
 
-  // 5. Переключение режимов 3D камеры
-  btnViewCross.addEventListener('click', () => {
-    btnViewCross.classList.add('active');
-    btnViewMap.classList.remove('active');
-    visualizer.переключить_режим('РАЗРЕЗ');
+  // 5. Переключение 3D режимов
+  function setActiveViewBtn(btn) {
+    [btnViewDual, btnViewMorph, btnViewMap].forEach(b => {
+      if (b) b.classList.remove('active');
+    });
+    if (btn) btn.classList.add('active');
+  }
+
+  btnViewDual.addEventListener('click', () => {
+    setActiveViewBtn(btnViewDual);
+    visualizer.переключить_режим('DUAL');
+  });
+
+  btnViewMorph.addEventListener('click', () => {
+    setActiveViewBtn(btnViewMorph);
+    visualizer.переключить_режим('MORPH');
   });
 
   btnViewMap.addEventListener('click', () => {
-    btnViewMap.classList.add('active');
-    btnViewCross.classList.remove('active');
-    visualizer.переключить_режим('КАРТА');
+    setActiveViewBtn(btnViewMap);
+    visualizer.переключить_режим('MAP');
   });
 
   // 6. Сценарии
   function resetScenarios() {
-    [btnScenarioNormal, btnScenarioLowWater, btnScenarioDrought, btnScenarioKoshTepa, btnScenarioAccident].forEach(b => {
-      b.classList.remove('active');
+    [btnScenarioNormal, btnScenarioLowWater, btnScenarioDrought, btnScenarioKoshTepa, btnScenarioConsortium].forEach(b => {
+      if (b) b.classList.remove('active');
     });
     sim.засуха = false;
     sim.маловодный_год = false;
@@ -252,75 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
     syncUI();
   });
 
-  btnScenarioAccident.addEventListener('click', () => {
+  btnScenarioConsortium.addEventListener('click', () => {
     resetScenarios();
-    btnScenarioAccident.classList.add('active');
-    sim.авария_утечка = true;
+    btnScenarioConsortium.classList.add('active');
+    // Включение сценария консорциума: Казахстан дает уголь/электроэнергию -> Токтогул копит воду и спускает летом
+    sim.уровень_модернизации = 0.70;
+    managementSlider.value = 70;
+    managementValueBox.textContent = "70";
     syncUI();
   });
-
-  // 7. Инспектор 3D объектов (Клик по IoT датчикам)
-  window.onSelect3DObject = (data) => {
-    if (data.type === 'IOT_SENSOR') {
-      inspectorTitle.textContent = `${data.id}: ${data.name}`;
-      
-      const mod = sim.уровень_модернизации;
-      const flow = (42.5 * (1.0 + (Math.random() - 0.5) * 0.05)).toFixed(2);
-      const press = sim.авария_утечка ? "2.1 бар (ПАДЕНИЕ)" : (5.4 + mod * 0.8).toFixed(1) + " бар";
-      const moist = (16.0 + mod * 26.0).toFixed(1) + " %";
-      const sal = (2.8 * (1.0 - mod * 0.75)).toFixed(2) + " г/л";
-      const leak = sim.авария_утечка ? "94 % (КРИТИЧЕСКАЯ УТЕЧКА)" : Math.max(1, Math.round(15 * (1.0 - mod))).toString() + " %";
-
-      inspectorFlow.textContent = `${flow} м³/с`;
-      inspectorPressure.textContent = press;
-      inspectorMoisture.textContent = moist;
-      inspectorSalinity.textContent = sal;
-      inspectorLeakProb.textContent = leak;
-
-      inspectorCard.style.display = 'block';
-    }
-  };
-
-  inspectorClose.addEventListener('click', () => {
-    inspectorCard.style.display = 'none';
-  });
-
-  // 8. WebSocket интеграция с Python бэкендом
-  let ws = null;
-  function connectWebSocket() {
-    try {
-      ws = new WebSocket('ws://localhost:8765');
-      ws.onopen = () => {
-        const dot = document.getElementById('ws-status-dot');
-        const text = document.getElementById('ws-status-text');
-        if (dot) dot.style.background = '#10b981';
-        if (text) text.textContent = 'Python Бэкенд: Активен (WS)';
-      };
-      ws.onmessage = (evt) => {
-        // При получении серверных данных
-        try {
-          const s = JSON.parse(evt.data);
-          // Синхронизация с сервером
-        } catch (e) {}
-      };
-      ws.onerror = () => {};
-      ws.onclose = () => {
-        setTimeout(connectWebSocket, 3000);
-      };
-    } catch (e) {}
-  }
-  connectWebSocket();
-
-  function sendWebSocketUpdate(payload) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(payload));
-    }
-  }
 
   // Первоначальная синхронизация
   syncUI();
 
-  // Периодический цикл для живой телеметрии
+  // Автоматический цикл
   setInterval(() => {
     if (sim.глобальное_обновление) {
       syncUI();

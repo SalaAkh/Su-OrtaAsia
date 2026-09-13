@@ -1,49 +1,44 @@
 /* ==========================================================================
-   ЦВЕТОВАЯ ПАЛИТРА И ДИЗАЙН-СИСТЕМА ЦИФРОВОГО ДВОЙНИКА «СУ-ОРТА АЗИЯ»
+   ДИЗАЙН-СИСТЕМА ЦИФРОВОГО ДВОЙНИКА «СУ-ОРТА АЗИЯ»
+   Четкая типографика, максимальная читаемость, яркие инженерные плашки
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@500;600;700;800;900&display=swap');
 
 :root {
-  --bg-primary: #060a12;
-  --bg-secondary: #0a1120;
-  --bg-panel: rgba(11, 18, 34, 0.85);
-  --bg-panel-hover: rgba(18, 28, 52, 0.9);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(0, 240, 255, 0.35);
+  --bg-primary: #040711;
+  --bg-secondary: #080f1d;
+  --bg-panel: rgba(9, 15, 30, 0.94);
+  --bg-card-dark: rgba(13, 22, 42, 0.9);
+  
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-active: #00f0ff;
 
-  /* Цвета Кризиса (Левая часть image_0.png) */
-  --crisis-red: #ff334b;
-  --crisis-red-glow: rgba(255, 51, 75, 0.45);
-  --crisis-bg: rgba(45, 10, 18, 0.85);
-  --crisis-border: rgba(255, 51, 75, 0.5);
-  --soil-salinity-white: #f0f3fa;
+  /* Кризис (Красный) */
+  --crisis-red: #ff2d4a;
+  --crisis-red-light: #ff6b81;
+  --crisis-bg: rgba(50, 10, 22, 0.92);
+  --crisis-border: #ff334b;
+  --crisis-glow: 0 0 25px rgba(255, 45, 74, 0.45);
 
-  /* Цвета Модернизации (Правая часть image_0.png) */
+  /* Модернизация (Лазурный) */
   --eco-cyan: #00f0ff;
   --eco-azure: #0ea5e9;
-  --eco-green: #10b981;
-  --eco-glow: rgba(0, 240, 255, 0.45);
-  --eco-bg: rgba(6, 30, 45, 0.85);
-  --eco-border: rgba(0, 240, 255, 0.5);
+  --eco-green: #00ff9d;
+  --eco-bg: rgba(6, 30, 48, 0.92);
+  --eco-border: #00f0ff;
+  --eco-glow: 0 0 25px rgba(0, 240, 255, 0.45);
 
-  /* Шрифты */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --shadow-lg: 0 10px 35px -5px rgba(0, 0, 0, 0.8);
-  --shadow-glow-cyan: 0 0 25px rgba(0, 240, 255, 0.35);
-  --shadow-glow-red: 0 0 25px rgba(255, 51, 75, 0.35);
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --shadow-panel: 0 14px 45px rgba(0, 0, 0, 0.85);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -56,19 +51,15 @@ body {
   user-select: none;
 }
 
-/* ==========================================================================
-   КОНТЕЙНЕР ПРИЛОЖЕНИЯ
-   ========================================================================== */
 #app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
   position: relative;
-  background: radial-gradient(circle at 50% 20%, #0d1930 0%, #060a12 70%);
+  background: radial-gradient(circle at 50% 15%, #0e1a32 0%, #040711 75%);
 }
 
-/* 3D Canvas Viewport */
 #viewport-container {
   position: absolute;
   top: 0;
@@ -85,47 +76,47 @@ body {
 }
 
 /* ==========================================================================
-   ВЕРХНИЙ ХЕДЕР (HUD TOP)
+   ВЕРХНИЙ ХЕДЕР
    ========================================================================== */
 header.hud-header {
   position: relative;
-  z-index: 10;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
-  background: linear-gradient(180deg, rgba(6, 10, 18, 0.95) 0%, rgba(6, 10, 18, 0.6) 80%, transparent 100%);
+  padding: 10px 24px;
+  background: linear-gradient(180deg, rgba(4, 7, 17, 0.98) 0%, rgba(4, 7, 17, 0.85) 85%, transparent 100%);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .brand-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #0ea5e9, #00f0ff);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-glow-cyan);
+  box-shadow: var(--eco-glow);
 }
 
 .brand-icon svg {
-  width: 22px;
-  height: 22px;
-  fill: #060a12;
+  width: 24px;
+  height: 24px;
+  fill: #040711;
 }
 
 .brand-title h1 {
   font-family: var(--font-display);
   font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: #fff;
   display: flex;
   align-items: center;
@@ -135,39 +126,39 @@ header.hud-header {
 .brand-badge {
   font-size: 0.65rem;
   font-family: var(--font-mono);
-  background: rgba(0, 240, 255, 0.15);
+  font-weight: 700;
+  background: rgba(0, 240, 255, 0.18);
   color: var(--eco-cyan);
-  border: 1px solid rgba(0, 240, 255, 0.4);
+  border: 1px solid rgba(0, 240, 255, 0.5);
   padding: 2px 8px;
   border-radius: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .brand-sub {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   color: #94a3b8;
+  font-weight: 500;
 }
 
-/* Переключатели режимов 3D камеры */
+/* Кнопки переключения видов */
 .view-modes {
   display: flex;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(14, 22, 42, 0.9);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   padding: 4px;
   gap: 4px;
-  backdrop-filter: blur(8px);
 }
 
 .view-btn {
   background: transparent;
   border: none;
   color: #94a3b8;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -177,101 +168,112 @@ header.hud-header {
 
 .view-btn:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .view-btn.active {
   background: var(--eco-cyan);
-  color: #060a12;
-  font-weight: 700;
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  color: #040711;
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
 }
 
-/* Статус подключения и время */
-.header-telemetry {
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  gap: 10px;
 }
 
-.connection-status {
+.btn-lab {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.2));
+  border: 1px solid var(--eco-cyan);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--eco-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  transition: all 0.2s;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--eco-green);
-  box-shadow: 0 0 8px var(--eco-green);
-  animation: pulse-dot 1.8s infinite;
+.btn-lab:hover {
+  background: var(--eco-cyan);
+  color: #040711;
+  box-shadow: 0 0 20px var(--eco-cyan);
 }
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+.btn-help {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.btn-help:hover {
+  border-color: var(--eco-cyan);
+  color: var(--eco-cyan);
 }
 
 /* ==========================================================================
-   ОСНОВНОЙ РАБОЧИЙ ЭКРАН (HUD PANELS)
+   ОСНОВНОЙ РАБОЧИЙ ЭКРАН (HUD)
    ========================================================================== */
 .hud-workspace {
   position: relative;
-  z-index: 5;
+  z-index: 10;
   flex: 1;
   display: flex;
   justify-content: space-between;
-  padding: 16px 24px;
-  pointer-events: none; /* Пропускаем клики на 3D Canvas, включаем для панелей */
+  padding: 14px 20px;
+  pointer-events: none;
 }
 
 .hud-panel {
   pointer-events: auto;
   background: var(--bg-panel);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-panel);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
 }
 
-/* ЛЕВАЯ ПАНЕЛЬ: УПРАВЛЕНИЕ И СЦЕНАРИИ */
 .drawer-left {
-  width: 340px;
-  max-height: calc(100vh - 200px);
+  width: 350px;
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
-  gap: 16px;
-  padding: 18px;
+  gap: 12px;
+  padding: 16px;
 }
 
-/* ПРАВАЯ ПАНЕЛЬ: АНАЛИТИКА, ДЕФИЦИТ, ИНСПЕКТОР */
 .drawer-right {
   width: 380px;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
-  gap: 16px;
-  padding: 18px;
+  gap: 12px;
+  padding: 16px;
 }
 
-/* Стилизация скроллбара */
 .drawer-left::-webkit-scrollbar,
 .drawer-right::-webkit-scrollbar {
   width: 5px;
 }
 .drawer-left::-webkit-scrollbar-thumb,
 .drawer-right::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
@@ -279,262 +281,277 @@ header.hud-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .panel-header h2 {
   font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #e2e8f0;
+  letter-spacing: 0.04em;
+  color: #f1f5f9;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.panel-header svg {
-  width: 16px;
-  height: 16px;
-  color: var(--eco-cyan);
+/* Карточки состояния */
+.state-card {
+  border-radius: 10px;
+  padding: 12px;
+  position: relative;
 }
 
-/* Карточки состояния «Текущий кризис vs Будущее» (Стиль image_0.png) */
-.state-banner {
-  border-radius: var(--radius-md);
-  padding: 14px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
+.state-card.crisis {
+  background: var(--crisis-bg);
+  border: 1.5px solid var(--crisis-border);
+  box-shadow: var(--crisis-glow);
 }
 
-.state-banner.crisis {
-  background: linear-gradient(135deg, rgba(255, 51, 75, 0.15) 0%, rgba(20, 5, 8, 0.8) 100%);
-  border: 1px solid var(--crisis-border);
-  box-shadow: 0 4px 20px rgba(255, 51, 75, 0.15);
+.state-card.sustainable {
+  background: var(--eco-bg);
+  border: 1.5px solid var(--eco-border);
+  box-shadow: var(--eco-glow);
 }
 
-.state-banner.sustainable {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(5, 20, 30, 0.8) 100%);
-  border: 1px solid var(--eco-border);
-  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
-}
-
-.banner-title {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
+.card-top-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 6px;
 }
 
-.state-banner.crisis .banner-title {
-  color: var(--crisis-red);
+.card-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.state-banner.sustainable .banner-title {
-  color: var(--eco-cyan);
-}
+.state-card.crisis .card-title { color: var(--crisis-red-light); }
+.state-card.sustainable .card-title { color: var(--eco-cyan); }
 
-.banner-badge {
-  font-size: 0.65rem;
+.card-badge {
   font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
   padding: 2px 6px;
   border-radius: 4px;
+  text-transform: uppercase;
 }
 
-.state-banner.crisis .banner-badge {
-  background: var(--crisis-red);
-  color: #fff;
-}
+.state-card.crisis .card-badge { background: var(--crisis-red); color: #fff; }
+.state-card.sustainable .card-badge { background: var(--eco-cyan); color: #040711; }
 
-.state-banner.sustainable .banner-badge {
-  background: var(--eco-cyan);
-  color: #060a12;
-  font-weight: 700;
-}
-
-.banner-desc {
-  font-size: 0.75rem;
-  color: #cbd5e1;
+.card-points {
+  list-style: none;
+  font-size: 0.74rem;
   line-height: 1.4;
-}
-
-/* Интерактивные кнопки сценариев */
-.scenario-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.scenario-btn {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  color: #cbd5e1;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: #e2e8f0;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+/* Сценарии */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.scenario-btn {
+  background: rgba(25, 35, 55, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px;
+  color: #e2e8f0;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .scenario-btn:hover {
-  background: rgba(51, 65, 85, 0.8);
+  background: rgba(45, 60, 90, 0.85);
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .scenario-btn.active {
-  background: rgba(255, 51, 75, 0.2);
+  background: rgba(255, 45, 74, 0.25);
   border-color: var(--crisis-red);
   color: #fff;
-  box-shadow: 0 0 12px rgba(255, 51, 75, 0.3);
+  box-shadow: 0 0 12px rgba(255, 45, 74, 0.4);
 }
 
 .scenario-btn.active.eco {
-  background: rgba(0, 240, 255, 0.2);
+  background: rgba(0, 240, 255, 0.25);
   border-color: var(--eco-cyan);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
 }
 
-.scenario-btn-title {
+.scenario-title {
   font-weight: 700;
   font-size: 0.78rem;
 }
 
-.scenario-btn-sub {
+.scenario-sub {
   font-size: 0.65rem;
   color: #94a3b8;
 }
 
 /* Ползунок Кош-Тепа */
-.canal-slider-group {
-  margin-top: 12px;
-  background: rgba(15, 23, 42, 0.6);
-  padding: 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+.kosh-slider-card {
+  background: rgba(18, 26, 46, 0.8);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  border-radius: 8px;
+  padding: 10px;
 }
 
-.slider-label-row {
+.kosh-slider-header {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 6px;
+  color: #f1f5f9;
 }
 
-.slider-value {
+.kosh-value {
   font-family: var(--font-mono);
-  color: #ffaa00;
+  color: #ffb800;
+  font-size: 0.84rem;
 }
 
-input[type="range"] {
-  width: 100%;
-  height: 6px;
-  -webkit-appearance: none;
-  background: #1e293b;
-  border-radius: 3px;
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--eco-cyan);
-  cursor: pointer;
-  box-shadow: 0 0 10px var(--eco-cyan);
-  transition: transform 0.1s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-/* Журнал предупреждений (Alert Log) */
-.alert-feed {
+/* Журнал предупреждений */
+.alert-box {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 160px;
+  gap: 6px;
+  max-height: 130px;
   overflow-y: auto;
-  margin-top: 10px;
 }
 
 .alert-item {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  border-radius: 5px;
   font-size: 0.72rem;
   line-height: 1.35;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   border-left: 3px solid;
 }
 
 .alert-item.danger {
-  background: rgba(255, 51, 75, 0.12);
+  background: rgba(255, 45, 74, 0.15);
   border-left-color: var(--crisis-red);
   color: #fca5a5;
 }
 
 .alert-item.warning {
-  background: rgba(255, 170, 0, 0.12);
-  border-left-color: #ffaa00;
-  color: #fde047;
+  background: rgba(255, 184, 0, 0.15);
+  border-left-color: #ffb800;
+  color: #fef08a;
 }
 
 .alert-item.info {
-  background: rgba(0, 240, 255, 0.12);
+  background: rgba(0, 240, 255, 0.15);
   border-left-color: var(--eco-cyan);
-  color: #a5f3fc;
+  color: #bae6fd;
+}
+
+/* 3D Выноски */
+#scene-callouts-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.callout-tag {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  background: rgba(8, 14, 28, 0.92);
+  backdrop-filter: blur(12px);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.25s;
+}
+
+.callout-tag.crisis {
+  border: 1px solid var(--crisis-red);
+  color: #ff6b81;
+}
+
+.callout-tag.crisis .tag-dot {
+  background: var(--crisis-red);
+  box-shadow: 0 0 8px var(--crisis-red);
+}
+
+.callout-tag.eco {
+  border: 1px solid var(--eco-cyan);
+  color: var(--eco-cyan);
+}
+
+.callout-tag.eco .tag-dot {
+  background: var(--eco-cyan);
+  box-shadow: 0 0 8px var(--eco-cyan);
+}
+
+.tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
 }
 
 /* ==========================================================================
-   НИЖНЯЯ ПАНЕЛЬ УПРАВЛЕНИЯ (ТОЧНО ПО СТИЛЮ IMAGE_0.PNG)
+   НИЖНИЙ БАР HUD (IMAGE_0.PNG)
    ========================================================================== */
 footer.hud-bottom-bar {
   position: relative;
-  z-index: 10;
-  background: rgba(6, 10, 18, 0.95);
-  backdrop-filter: blur(20px);
+  z-index: 20;
+  background: rgba(4, 7, 17, 0.98);
+  backdrop-filter: blur(24px);
   border-top: 1px solid var(--border-subtle);
-  padding: 16px 32px;
+  padding: 14px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
+  gap: 28px;
 }
 
-/* Метрики истощения и эффективности */
 .metrics-summary-group {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 24px;
 }
 
 .metric-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .metric-label {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #94a3b8;
@@ -543,17 +560,17 @@ footer.hud-bottom-bar {
 .metric-value {
   font-family: var(--font-display);
   font-size: 1.35rem;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .metric-value.critical {
   color: var(--crisis-red);
-  text-shadow: 0 0 15px rgba(255, 51, 75, 0.5);
+  text-shadow: 0 0 16px rgba(255, 45, 74, 0.6);
 }
 
 .metric-value.sustainable {
   color: var(--eco-cyan);
-  text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+  text-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
 }
 
 .metric-divider {
@@ -562,21 +579,20 @@ footer.hud-bottom-bar {
   background: var(--border-subtle);
 }
 
-/* Главный слайдер уровня управления (Management Level Slider) */
 .management-slider-container {
   flex: 1;
-  max-width: 580px;
+  max-width: 500px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .slider-title {
   font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.84rem;
+  font-weight: 800;
   white-space: nowrap;
-  color: #e2e8f0;
+  color: #f1f5f9;
 }
 
 .slider-wrapper {
@@ -586,118 +602,150 @@ footer.hud-bottom-bar {
 
 #management-slider {
   height: 8px;
-  background: linear-gradient(90deg, #ff334b 0%, #ffaa00 45%, #00f0ff 100%);
+  background: linear-gradient(90deg, #ff2d4a 0%, #ffaa00 45%, #00f0ff 100%);
   border-radius: 4px;
 }
 
 .slider-number-box {
   background: #0f172a;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 6px 14px;
+  border-radius: 6px;
+  padding: 5px 12px;
   font-family: var(--font-mono);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   min-width: 48px;
   text-align: center;
   color: #fff;
 }
 
-/* Тумблер глобального обновления */
 .toggle-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .toggle-label {
   font-family: var(--font-display);
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #cbd5e1;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 46px;
-  height: 24px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider-round {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #334155;
-  transition: .3s;
-  border-radius: 24px;
-}
-
-.slider-round:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .3s;
-  border-radius: 50%;
-}
-
-input:checked + .slider-round {
-  background-color: var(--eco-cyan);
-  box-shadow: 0 0 10px var(--eco-cyan);
-}
-
-input:checked + .slider-round:before {
-  transform: translateX(22px);
-  background-color: #060a12;
+  font-weight: 700;
+  color: #e2e8f0;
 }
 
 /* ==========================================================================
-   ИНСПЕКТОР IoT-ДАТЧИКА (МОДАЛЬНАЯ КАРТОЧКА)
+   МОДАЛЬНОЕ ОКНО: СТУДЕНЧЕСКАЯ ИНЖЕНЕРНАЯ ЛАБОРАТОРИЯ
    ========================================================================== */
-.inspector-card {
-  position: absolute;
-  right: 420px;
-  top: 80px;
-  width: 320px;
-  background: rgba(11, 18, 34, 0.94);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--eco-cyan);
-  box-shadow: var(--shadow-glow-cyan);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  z-index: 20;
+.lab-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(14px);
+  z-index: 150;
   display: none;
-  animation: fadeIn 0.25s ease-out;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.lab-dialog {
+  width: 860px;
+  max-height: 88vh;
+  background: #091122;
+  border: 1.5px solid var(--eco-cyan);
+  box-shadow: 0 15px 50px rgba(0, 240, 255, 0.4);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.inspector-header {
+.lab-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  padding: 16px 24px;
+  background: #0d1830;
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.inspector-header h3 {
-  font-size: 0.85rem;
+.lab-header h2 {
   font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
   color: var(--eco-cyan);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lab-tabs {
+  display: flex;
+  background: #060d1b;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.lab-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.lab-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lab-tab-btn.active {
+  color: var(--eco-cyan);
+  border-bottom-color: var(--eco-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.lab-body {
+  padding: 22px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.calc-box {
+  background: rgba(14, 24, 46, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.calc-row span:first-child {
+  color: #94a3b8;
+}
+
+.calc-row span:last-child {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #00ff9d;
 }
 
 .close-btn {
@@ -705,34 +753,10 @@ input:checked + .slider-round:before {
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 .close-btn:hover {
   color: #fff;
-}
-
-.telemetry-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  padding: 5px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
-}
-
-.telemetry-row span:first-child {
-  color: #94a3b8;
-}
-
-.telemetry-row span:last-child {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-/* Графики Chart.js */
-.chart-container {
-  height: 140px;
-  width: 100%;
-  margin-top: 8px;
 }
