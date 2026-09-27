@@ -22,6 +22,33 @@
       <canvas id="canvas-3d"></canvas>
       <div id="scene-callouts-container"></div>
 
+      <!-- ВСПЛЫВАЮЩАЯ КАРТОЧКА IOT-СЕНСОРА -->
+      <div id="iot-sensor-popup" class="iot-sensor-popup" style="display: none;">
+        <div class="sensor-popup-header">
+          <span class="sensor-dot"></span>
+          <span id="sensor-popup-title" class="sensor-popup-title">Гидропост Керки</span>
+          <button id="btn-close-sensor-popup" class="close-sensor-btn" aria-label="Закрыть">&times;</button>
+        </div>
+        <div class="sensor-popup-grid">
+          <div class="sensor-metric">
+            <span class="s-label">Расход воды (Q):</span>
+            <span id="sensor-val-flow" class="s-val">1420.5 м³/с</span>
+          </div>
+          <div class="sensor-metric">
+            <span class="s-label">Уровень (H):</span>
+            <span id="sensor-val-level" class="s-val">4.82 м</span>
+          </div>
+          <div class="sensor-metric">
+            <span class="s-label">Минерализация:</span>
+            <span id="sensor-val-sal" class="s-val">0.95 г/л</span>
+          </div>
+          <div class="sensor-metric">
+            <span class="s-label">Связь LoRaWAN:</span>
+            <span id="sensor-val-rssi" class="s-val">-84 dBm (96%)</span>
+          </div>
+        </div>
+      </div>
+
       <!-- ПЛАВАЮЩИЙ 4D ТАЙМЛАПС (1960–2050 гг.) -->
       <div class="timeline-floating-hud">
         <div class="timeline-header">
@@ -76,21 +103,28 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/>
           </svg>
-          3D Спутниковая карта
+          <span data-i18n="view_map">3D Спутниковая карта</span>
         </button>
         <button id="btn-view-dual" class="view-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="8" rx="2"/>
             <rect x="3" y="13" width="18" height="8" rx="2"/>
           </svg>
-          CAD-разрез каналов
+          <span data-i18n="view_dual">CAD-разрез каналов</span>
         </button>
         <button id="btn-view-morph" class="view-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="9"/>
             <path d="M12 7v10M7 12h10"/>
           </svg>
-          Трансформация (0-100%)
+          <span data-i18n="view_morph">Трансформация (0-100%)</span>
+        </button>
+        <button id="btn-view-dam" class="view-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19L8 5h8l4 14H4z"/>
+            <line x1="12" y1="5" x2="12" y2="19"/>
+          </svg>
+          <span data-i18n="view_dam">3D ГЭС в разрезе</span>
         </button>
       </div>
 
@@ -100,14 +134,14 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
           </svg>
-          🧠 AI Диспетчер
+          <span data-i18n="btn_ai">🧠 AI Диспетчер</span>
         </button>
 
         <button id="btn-open-lab" class="btn-lab">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
           </svg>
-          Лаборатория инженера
+          <span data-i18n="btn_lab">Лаборатория инженера</span>
         </button>
 
         <button id="btn-export-report" class="btn-export" title="Сформировать официальный паспорт водного баланса">
@@ -116,8 +150,30 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Отчет МКВК
+          <span data-i18n="btn_report">Отчет МКВК</span>
         </button>
+
+        <!-- Виджет Live погоды Open-Meteo -->
+        <div id="weather-widget" class="weather-widget-badge" title="Погода в реальном времени (Open-Meteo API)">
+          <span class="weather-icon">🌤️</span>
+          <span id="weather-text">Ташкент +24°C | 3.8 м/с</span>
+        </div>
+
+        <!-- Кнопка эмбиентного звука -->
+        <button id="btn-toggle-sound" class="btn-sound-toggle" title="Включить/выключить звук" aria-label="Включить звук">
+          <span id="sound-icon">🔇</span>
+        </button>
+
+        <!-- Переключатель языка -->
+        <div class="lang-selector-wrap">
+          <label for="lang-select" class="sr-only" style="display:none;">Язык</label>
+          <select id="lang-select" class="lang-select" aria-label="Выбор языка">
+            <option value="ru" selected>RU</option>
+            <option value="uz">UZ</option>
+            <option value="kz">KZ</option>
+            <option value="en">EN</option>
+          </select>
+        </div>
 
         <button id="btn-open-help" class="btn-help">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -161,35 +217,35 @@
 
       <!-- ЛЕВАЯ ПАНЕЛЬ: СЦЕНАРИИ И ПАРАМЕТРЫ -->
       <aside class="hud-panel drawer-left">
-        <div class="panel-section-title">СЦЕНАРИИ СТРЕСС-ТЕСТИРОВАНИЯ</div>
+        <div class="panel-section-title" data-i18n="scenarios_title">СЦЕНАРИИ СТРЕСС-ТЕСТИРОВАНИЯ</div>
 
         <div class="scenario-grid">
           <button id="sc-normal" class="scenario-btn active">
-            <span class="scenario-title">Базовый баланс</span>
-            <span class="scenario-sub">Многолетний средний сток</span>
+            <span class="scenario-title" data-i18n="sc_normal">Базовый баланс</span>
+            <span class="scenario-sub" data-i18n="sc_normal_sub">Многолетний средний сток</span>
           </button>
           <button id="sc-low-water" class="scenario-btn">
-            <span class="scenario-title">Маловодный год</span>
-            <span class="scenario-sub">-30% ледникового стока</span>
+            <span class="scenario-title" data-i18n="sc_low_water">Маловодный год</span>
+            <span class="scenario-sub" data-i18n="sc_low_water_sub">-30% ледникового стока</span>
           </button>
           <button id="sc-drought" class="scenario-btn">
-            <span class="scenario-title">Климатическая засуха</span>
-            <span class="scenario-sub">+4.5°C и экстремальное испарение</span>
+            <span class="scenario-title" data-i18n="sc_drought">Климатическая засуха</span>
+            <span class="scenario-sub" data-i18n="sc_drought_sub">+4.5°C и экстремальное испарение</span>
           </button>
           <button id="sc-kosh-tepa" class="scenario-btn">
-            <span class="scenario-title">Кош-Тепа (Максимум)</span>
-            <span class="scenario-sub">Водозабор 15 км³/год</span>
+            <span class="scenario-title" data-i18n="sc_kosh_tepa">Кош-Тепа (Максимум)</span>
+            <span class="scenario-sub" data-i18n="sc_kosh_tepa_sub">Водозабор 15 км³/год</span>
           </button>
           <button id="sc-consortium" class="scenario-btn full-width">
-            <span class="scenario-title">⚡ Водно-энергетический консорциум</span>
-            <span class="scenario-sub">Зимний энергообмен (уголь/газ) ⇄ Летний поливной сброс</span>
+            <span class="scenario-title" data-i18n="sc_consortium">⚡ Водно-энергетический консорциум</span>
+            <span class="scenario-sub" data-i18n="sc_consortium_sub">Зимний энергообмен (уголь/газ) ⇄ Летний поливной сброс</span>
           </button>
         </div>
 
         <!-- Слайдер Канала Кош-Тепа -->
         <div class="kosh-slider-card">
           <div class="kosh-slider-header">
-            <label for="kosh-tepa-slider">Водозабор Кош-Тепа (Афганистан):</label>
+            <label for="kosh-tepa-slider" data-i18n="kosh_label">Водозабор Кош-Тепа (Афганистан):</label>
             <span id="kosh-tepa-value" class="kosh-value">0.0 км³/год</span>
           </div>
           <input type="range" id="kosh-tepa-slider" min="0" max="15" step="0.5" value="0" aria-label="Водозабор Кош-Тепа (Афганистан)">
@@ -228,7 +284,7 @@
 
       <!-- ПРАВАЯ ПАНЕЛЬ: АНАЛИТИКА И ВОДНЫЙ БАЛАНС -->
       <aside class="hud-panel drawer-right">
-        <div class="panel-section-title">ДЕФИЦИТ ВОДЫ В АГЛОМЕРАЦИЯХ</div>
+        <div class="panel-section-title" data-i18n="cities_title">ДЕФИЦИТ ВОДЫ В АГЛОМЕРАЦИЯХ</div>
 
         <!-- График дефицита городов -->
         <div class="chart-container" style="height: 135px;">
@@ -251,7 +307,7 @@
         </div>
 
         <!-- График баланса бассейна -->
-        <div class="panel-section-title" style="margin-top: 10px;">СТРУКТУРА ВОДНОГО БАЛАНСА (КМ³/ГОД)</div>
+        <div class="panel-section-title" style="margin-top: 10px;" data-i18n="balance_title">СТРУКТУРА ВОДНОГО БАЛАНСА (КМ³/ГОД)</div>
         <div class="chart-container" style="height: 135px;">
           <canvas id="balanceChart"></canvas>
         </div>
@@ -272,28 +328,28 @@
     <footer class="hud-bottom-bar">
       <div class="metrics-summary-group">
         <div class="metric-item">
-          <span class="metric-label">РИСК ИСТОЩЕНИЯ</span>
+          <span class="metric-label" data-i18n="risk_label">РИСК ИСТОЩЕНИЯ</span>
           <span id="metric-depletion-risk" class="metric-value critical">Критический</span>
         </div>
 
         <div class="metric-divider"></div>
 
         <div class="metric-item">
-          <span class="metric-label">ЭФФЕКТИВНОСТЬ СЕТИ</span>
+          <span class="metric-label" data-i18n="efficiency_label">ЭФФЕКТИВНОСТЬ СЕТИ</span>
           <span id="metric-efficiency" class="metric-value sustainable">0%</span>
         </div>
 
         <div class="metric-divider"></div>
 
         <div class="metric-item">
-          <span class="metric-label">ПОТЕРИ ИСПАРЕНИЯ</span>
+          <span class="metric-label" data-i18n="evap_label">ПОТЕРИ ИСПАРЕНИЯ</span>
           <span id="metric-evap-loss" class="metric-value warn-color">18.5 км³/год</span>
         </div>
 
         <div class="metric-divider"></div>
 
         <div class="metric-item">
-          <span class="metric-label">ПОТЕРИ ФИЛЬТРАЦИИ</span>
+          <span class="metric-label" data-i18n="filt_label">ПОТЕРИ ФИЛЬТРАЦИИ</span>
           <span id="metric-filt-loss" class="metric-value crit-color">34.2 км³/год</span>
         </div>
       </div>
@@ -301,7 +357,7 @@
       <!-- Главный слайдер уровня модернизации -->
       <div class="management-slider-container">
         <div class="slider-header-inline">
-          <label for="management-slider" class="slider-title">Уровень модернизации бассейна:</label>
+          <label for="management-slider" class="slider-title" data-i18n="modernization_label">Уровень модернизации бассейна:</label>
           <span class="slider-sub-hint">(Бетонирование каналов + Капельное орошение + Умные затворы)</span>
         </div>
         <div class="slider-wrapper">
@@ -312,7 +368,7 @@
 
       <!-- Тумблер автосимуляции -->
       <div class="toggle-group">
-        <label for="global-update-toggle" class="toggle-label">Автосимуляция</label>
+        <label for="global-update-toggle" class="toggle-label" data-i18n="auto_sim">Автосимуляция</label>
         <label class="switch" for="global-update-toggle">
           <input type="checkbox" id="global-update-toggle" aria-label="Автосимуляция" checked>
           <span class="slider-round"></span>
@@ -529,6 +585,8 @@ VALUES ('POST-AMU-KERKI-01', 1420.5, 4.82, 0.95, NOW());</code></pre>
 
   </div>
 
+  <script src="js/audio_synth.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/hydrology_sim.js"></script>
   <script src="js/scene_3d.js"></script>
   <script src="js/ui_controller.js"></script>

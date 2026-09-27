@@ -12,6 +12,7 @@ import json
 import time
 import asyncio
 import threading
+import sqlite3
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -22,6 +23,45 @@ if sys.platform == "win32":
         sys.stderr.reconfigure(encoding='utf-8')
     except Exception:
         pass
+
+# Путь к локальной SQLite базе данных
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "database", "water_balance.db"))
+
+def init_db():
+    """Инициализация таблиц базы данных водного баланса."""
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS simulation_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                modernization_level REAL,
+                kosh_tepa_km3 REAL,
+                is_drought INTEGER,
+                is_low_water INTEGER,
+                efficiency_pct REAL,
+                filtration_loss_km3 REAL,
+                evaporation_loss_km3 REAL,
+                aral_inflow_km3 REAL,
+                total_deficit_pct REAL
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS iot_telemetry_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                post_id TEXT,
+                name TEXT,
+                flow_rate_m3s REAL,
+                water_level_m REAL,
+                salinity_g_l REAL,
+                rssi_dbm REAL
+            )
+        ''')
+        conn.commit()
+
+init_db()
 
 # Импорт локальных вычислительных модулей
 from hydrology_engine import HydrologyEngine
@@ -125,6 +165,37 @@ class SimulationManager:
             "журнал_предупреждений": все_предупреждения
         }
 
+        # Периодическое сохранение снимка в SQLite (не чаще 1 раза в 2 секунды)
+        сейчас = time.time()
+        if not hasattr(self, '_last_db_save') or сейчас - self._last_db_save > 2.0:
+            self._last_db_save = сейчас
+            try:
+                with sqlite3.connect(DB_PATH) as conn:
+                    c = conn.cursor()
+                    aral_flow = float(баланс.get("приток_южный_арал_км3", 0)) + float(баланс.get("приток_северный_арал_км3", 0))
+                    c.execute('''
+                        INSERT INTO simulation_snapshots (
+                            modernization_level, kosh_tepa_km3, is_drought, is_low_water,
+                            efficiency_pct, filtration_loss_km3, evaporation_loss_km3,
+                            aral_inflow_km3, total_deficit_pct
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        self.уровень_модернизации,
+                        self.кош_тепа_отбор_км3,
+                        1 if self.засуха else 0,
+                        1 if self.маловодный_год else 0,
+                        эффективность_системы_процент,
+                        float(баланс.get("потери_фильтрация_км3", 0)),
+                        float(баланс.get("потери_испарение_км3", 0)),
+                        aral_flow,
+                        потери_фильтрации_процент
+                    ))
+                    conn.commit()
+            except Exception:
+                pass
+
+        return snapshot
+
 sim_manager = SimulationManager()
 
 class CustomHTTPHandler(SimpleHTTPRequestHandler):
@@ -146,6 +217,21 @@ class CustomHTTPHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             data = sim_manager.получить_полное_состояние()
             self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        elif parsed.path == "/api/history":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            history = []
+            try:
+                with sqlite3.connect(DB_PATH) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.cursor()
+                    rows = cursor.execute("SELECT * FROM simulation_snapshots ORDER BY id DESC LIMIT 20").fetchall()
+                    history = [dict(r) for r in rows]
+            except Exception:
+                pass
+            self.wfile.write(json.dumps(history, ensure_ascii=False).encode("utf-8"))
         else:
             super().do_GET()
 

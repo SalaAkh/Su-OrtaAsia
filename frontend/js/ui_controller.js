@@ -5,9 +5,16 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Инициализация 3D сцены и физического движка
+  // 1. Инициализация 3D сцены, физического движка, звука и локализации
   const sim = new HydrologySimulationClient();
   const visualizer = new WaterSimulation3D('canvas-3d', 'scene-callouts-container');
+
+  // Web Audio API синтезатор и менеджер локализации i18n
+  const audioSynth = typeof WaterAudioSynthesizer !== 'undefined' ? new WaterAudioSynthesizer() : null;
+  window.audioSynth = audioSynth;
+
+  const i18n = typeof I18nManager !== 'undefined' ? new I18nManager() : null;
+  window.i18n = i18n;
 
   // DOM Элементы управления
   const managementSlider = document.getElementById('management-slider');
@@ -20,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnViewMap = document.getElementById('btn-view-map');
   const btnViewDual = document.getElementById('btn-view-dual');
   const btnViewMorph = document.getElementById('btn-view-morph');
+  const btnViewDam = document.getElementById('btn-view-dam');
 
   // Кнопки сценариев
   const btnScenarioNormal = document.getElementById('sc-normal');
@@ -27,6 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnScenarioDrought = document.getElementById('sc-drought');
   const btnScenarioKoshTepa = document.getElementById('sc-kosh-tepa');
   const btnScenarioConsortium = document.getElementById('sc-consortium');
+
+  // Виджеты звука, языка и погоды
+  const btnToggleSound = document.getElementById('btn-toggle-sound');
+  const soundIcon = document.getElementById('sound-icon');
+  const langSelect = document.getElementById('lang-select');
+  const weatherText = document.getElementById('weather-text');
+
+  // Карточка IoT датчика
+  const iotPopup = document.getElementById('iot-sensor-popup');
+  const btnCloseSensorPopup = document.getElementById('btn-close-sensor-popup');
+  const sensorPopupTitle = document.getElementById('sensor-popup-title');
+  const sensorValFlow = document.getElementById('sensor-val-flow');
+  const sensorValLevel = document.getElementById('sensor-val-level');
+  const sensorValSal = document.getElementById('sensor-val-sal');
+  const sensorValRssi = document.getElementById('sensor-val-rssi');
 
   // Метрики нижнего бара
   const metricDepletionRisk = document.getElementById('metric-depletion-risk');
@@ -132,7 +155,65 @@ document.addEventListener('DOMContentLoaded', () => {
       inspectorTitle.textContent = node.title;
       inspectorDesc.textContent = node.desc;
     }
+    if (audioSynth) audioSynth.playRadarPing(760);
   });
+
+  // Событие выбора IoT-сенсора
+  if (btnCloseSensorPopup && iotPopup) {
+    btnCloseSensorPopup.addEventListener('click', () => {
+      iotPopup.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('iot-sensor-selected', (e) => {
+    const s = e.detail;
+    if (!s || !iotPopup) return;
+    if (sensorPopupTitle) sensorPopupTitle.textContent = s.name || s.id;
+    if (sensorValFlow) sensorValFlow.textContent = `${s.flow ? s.flow.toFixed(1) : '--'} м³/с`;
+    if (sensorValLevel) sensorValLevel.textContent = `${s.level ? s.level.toFixed(2) : '--'} м`;
+    if (sensorValSal) sensorValSal.textContent = `${s.sal ? s.sal.toFixed(2) : '--'} г/л`;
+    if (sensorValRssi) sensorValRssi.textContent = `${s.rssi} dBm (LoRaWAN)`;
+    iotPopup.style.display = 'block';
+
+    if (audioSynth) {
+      audioSynth.playRadarPing(920);
+    }
+  });
+
+  // Управление звуком
+  if (btnToggleSound && audioSynth) {
+    btnToggleSound.addEventListener('click', () => {
+      const active = audioSynth.toggleMute();
+      if (soundIcon) soundIcon.textContent = active ? '🔊' : '🔇';
+      btnToggleSound.classList.toggle('active', active);
+    });
+  }
+
+  // Переключение языка i18n
+  if (langSelect && i18n) {
+    langSelect.addEventListener('change', (e) => {
+      i18n.setLanguage(e.target.value);
+    });
+  }
+
+  // Live погода через Open-Meteo
+  async function fetchLiveWeather() {
+    if (!weatherText) return;
+    try {
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=41.2995&longitude=69.2401&current_weather=true');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (json && json.current_weather) {
+        const temp = json.current_weather.temperature;
+        const wind = json.current_weather.windspeed;
+        const sign = temp > 0 ? '+' : '';
+        weatherText.textContent = `Ташкент ${sign}${temp}°C | ${wind} км/ч`;
+      }
+    } catch (e) {
+      weatherText.textContent = 'Ташкент +24°C | 3.8 м/с';
+    }
+  }
+  fetchLiveWeather();
 
   // =========================================================================
   // МОДАЛЬНОЕ ОКНО: AI ДИСПЕТЧЕР ВОДОДЕЛЕНИЯ
@@ -451,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 5. Переключение 3D режимов
   function setActiveViewBtn(btn) {
-    [btnViewMap, btnViewDual, btnViewMorph].forEach(b => {
+    [btnViewMap, btnViewDual, btnViewMorph, btnViewDam].forEach(b => {
       if (b) b.classList.remove('active');
     });
     if (btn) btn.classList.add('active');
@@ -460,17 +541,28 @@ document.addEventListener('DOMContentLoaded', () => {
   btnViewMap.addEventListener('click', () => {
     setActiveViewBtn(btnViewMap);
     visualizer.переключить_режим('MAP');
+    if (audioSynth) audioSynth.playRadarPing(880);
   });
 
   btnViewDual.addEventListener('click', () => {
     setActiveViewBtn(btnViewDual);
     visualizer.переключить_режим('DUAL');
+    if (audioSynth) audioSynth.playRadarPing(700);
   });
 
   btnViewMorph.addEventListener('click', () => {
     setActiveViewBtn(btnViewMorph);
     visualizer.переключить_режим('MORPH');
+    if (audioSynth) audioSynth.playRadarPing(580);
   });
+
+  if (btnViewDam) {
+    btnViewDam.addEventListener('click', () => {
+      setActiveViewBtn(btnViewDam);
+      visualizer.переключить_режим('DAM');
+      if (audioSynth) audioSynth.playRadarPing(500);
+    });
+  }
 
   // 6. Сценарии
   function resetScenarios() {
@@ -488,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.кош_тепа_отбор_км3 = 0.0;
     koshTepaSlider.value = 0;
     koshTepaValue.textContent = "0.0 км³/год";
+    if (audioSynth) audioSynth.playRadarPing(520);
     syncUI();
   });
 
@@ -495,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetScenarios();
     btnScenarioLowWater.classList.add('active');
     sim.маловодный_год = true;
+    if (audioSynth) audioSynth.playRadarPing(480);
     syncUI();
   });
 
@@ -502,6 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetScenarios();
     btnScenarioDrought.classList.add('active');
     sim.засуха = true;
+    if (audioSynth) audioSynth.playAlertChirp();
     syncUI();
   });
 
@@ -511,6 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.кош_тепа_отбор_км3 = 13.5;
     koshTepaSlider.value = 13.5;
     koshTepaValue.textContent = "13.5 км³/год";
+    if (audioSynth) audioSynth.playAlertChirp();
     syncUI();
   });
 
@@ -520,6 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.уровень_модернизации = 0.70;
     managementSlider.value = 70;
     managementValueBox.textContent = "70%";
+    if (audioSynth) audioSynth.playRadarPing(660);
     syncUI();
   });
 

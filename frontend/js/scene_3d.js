@@ -2,11 +2,13 @@
  * ============================================================================
  * ВЫСОКОДЕТАЛИЗИРОВАННЫЙ GIS / САТЕЛЛИТНЫЙ 3D ДВОЙНИК «СУ-ОРТА АЗИЯ»
  * ============================================================================
- * Расширенная версия:
- * 1. Процедурные GIS-слои (Спутник, Засоление почв, Влажность NDVI, Грунтовые воды УГВ)
- * 2. 4D Временная шкала (1960–2050 гг.) с исторической реконструкцией Арала и прогнозом
- * 3. Анимированные русла рек, динамические водоемы и интерактивные маяки
- * 4. CAD-разрез земляного канала vs полимерного лотка с капельным поливом
+ * Полный функционал:
+ * 1. Процедурные GIS-слои (Спутник, Засоление почв, Влажность NDVI, Грунтовые воды)
+ * 2. 4D Временная шкала (1960–2050 гг.) с динамическим морфингом Арала
+ * 3. Сеть IoT-датчиков реального времени (LoRaWAN телеметрия)
+ * 4. 3D-симуляция пыле-солевых бурь Аралкума (Particle Vortex)
+ * 5. Детальный инженерный разрез Токтогульской/Нурекской ГЭС (Mode DAM)
+ * 6. CAD-разрез каналов (Было vs Стало)
  */
 
 class WaterSimulation3D {
@@ -14,9 +16,9 @@ class WaterSimulation3D {
     this.canvas = document.getElementById(canvasId);
     this.calloutsContainer = document.getElementById(calloutsContainerId);
     
-    // Режимы: 'MAP' (3D Геокарта), 'DUAL' (Разрез Было vs Стало), 'MORPH' (Трансформация)
+    // Режимы: 'MAP', 'DUAL', 'MORPH', 'DAM'
     this.текущий_режим = 'MAP';
-    this.активный_слой = 'satellite'; // 'satellite', 'salinity', 'moisture', 'groundwater'
+    this.активный_слой = 'satellite';
     this.текущий_год = 2026;
 
     this.уровень_модернизации = 0.0;
@@ -56,17 +58,21 @@ class WaterSimulation3D {
     this.groupMap = new THREE.Group();
     this.groupDual = new THREE.Group();
     this.groupMorph = new THREE.Group();
+    this.groupDam = new THREE.Group();
     
     this.scene.add(this.groupMap);
     this.scene.add(this.groupDual);
     this.scene.add(this.groupMorph);
+    this.scene.add(this.groupDam);
 
     this.groupDual.visible = false;
     this.groupMorph.visible = false;
+    this.groupDam.visible = false;
 
-    // Анимационные коллекции
+    // Коллекции объектов
     this.animatedObjects = [];
     this.gisHotspots = [];
+    this.iotSensors = [];
     this.callouts = [];
     this.cachedTextures = {};
 
@@ -74,12 +80,17 @@ class WaterSimulation3D {
     this.setupLighting();
     this.setupAtmosphere();
 
-    // Создание 3D сцен
+    // Построение сцен
     this.buildBasinMapScene();
     this.buildDualTierScene();
     this.buildMorphScene();
+    this.buildDamScene();
 
-    // Начальный вид камеры на весь бассейн
+    // Создание пылевой бури Аралкума и сети IoT
+    this.setupAralkumStorm();
+    this.setupIoTSensors();
+
+    // Начальный вид камеры
     this.setCameraForMap();
 
     // Слушатели событий
@@ -122,17 +133,15 @@ class WaterSimulation3D {
   }
 
   // =========================================================================
-  // ПРОЦЕДУРНЫЕ GIS ТЕКСТУРЫ И ТЕПЛОВЫЕ КАРТЫ
+  // ПРОЦЕДУРНЫЕ GIS ТЕКСТУРЫ
   // =========================================================================
   createSatelliteTexture() {
     if (this.cachedTextures['satellite']) return this.cachedTextures['satellite'];
-
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1536;
     const ctx = canvas.getContext('2d');
 
-    // 1. Базовый грунт
     const baseGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     baseGrad.addColorStop(0.0, '#3a3226');
     baseGrad.addColorStop(0.3, '#785b3a');
@@ -141,15 +150,11 @@ class WaterSimulation3D {
     ctx.fillStyle = baseGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 2. Дюны
     ctx.fillStyle = 'rgba(180, 140, 85, 0.12)';
     for (let i = 0; i < 6000; i++) {
-      const rx = Math.random() * canvas.width;
-      const ry = Math.random() * canvas.height;
-      ctx.fillRect(rx, ry, 2 + Math.random() * 8, 1 + Math.random() * 3);
+      ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2 + Math.random() * 8, 1 + Math.random() * 3);
     }
 
-    // 3. Зеленые оазисы
     this.drawOasis(ctx, 1450, 680, 160, 90, '#2d5a27', '#437c35');
     this.drawOasis(ctx, 1320, 520, 120, 70, '#36682b', '#4d8a3d');
     this.drawOasis(ctx, 1150, 780, 180, 60, '#345e28', '#447833');
@@ -157,7 +162,6 @@ class WaterSimulation3D {
     this.drawRiverBelt(ctx, 1380, 1050, 720, 680, 24, '#315c28');
     this.drawRiverBelt(ctx, 1500, 650, 580, 360, 18, '#32602a');
 
-    // 4. Белые солончаки
     const saltGrad = ctx.createRadialGradient(580, 520, 10, 580, 520, 200);
     saltGrad.addColorStop(0, 'rgba(245, 248, 255, 0.9)');
     saltGrad.addColorStop(0.5, 'rgba(215, 225, 235, 0.6)');
@@ -167,7 +171,6 @@ class WaterSimulation3D {
     ctx.ellipse(580, 520, 180, 220, 0.1, 0, Math.PI * 2);
     ctx.fill();
 
-    // 5. Горы Памира и Тянь-Шаня
     const mountainGrad = ctx.createLinearGradient(1400, 0, canvas.width, canvas.height);
     mountainGrad.addColorStop(0, 'rgba(90, 100, 115, 0.7)');
     mountainGrad.addColorStop(0.5, 'rgba(160, 175, 195, 0.85)');
@@ -183,9 +186,7 @@ class WaterSimulation3D {
     ctx.closePath();
     ctx.fill();
 
-    // 6. Сетка GIS
     this.drawGisGrid(ctx, canvas);
-
     const texture = new THREE.CanvasTexture(canvas);
     this.cachedTextures['satellite'] = texture;
     return texture;
@@ -193,18 +194,14 @@ class WaterSimulation3D {
 
   createSalinityTexture() {
     if (this.cachedTextures['salinity']) return this.cachedTextures['salinity'];
-
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1536;
     const ctx = canvas.getContext('2d');
 
-    // Базовый темный фон (низкая засоленность)
     ctx.fillStyle = '#081726';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Очаги тяжелого засоления (красно-оранжевый / фиолетовый термоспектр)
-    // 1. Аралкум (солончаковая пустыня усыхающего Арала)
     const aralSalt = ctx.createRadialGradient(580, 520, 20, 580, 520, 320);
     aralSalt.addColorStop(0, 'rgba(255, 30, 80, 0.95)');
     aralSalt.addColorStop(0.4, 'rgba(255, 140, 0, 0.85)');
@@ -215,15 +212,11 @@ class WaterSimulation3D {
     ctx.ellipse(580, 520, 240, 260, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Низовья Амударьи (Хорезм, Нукус) и Бухарский оазис
     this.drawHeatSpot(ctx, 740, 700, 180, 'rgba(255, 80, 40, 0.8)');
     this.drawHeatSpot(ctx, 1150, 820, 160, 'rgba(245, 160, 0, 0.7)');
-
-    // 3. Каракумский канал (просачивание и подъем солончаков)
     this.drawRiverBelt(ctx, 1380, 1050, 720, 680, 38, 'rgba(255, 120, 20, 0.6)');
 
     this.drawGisGrid(ctx, canvas);
-
     const texture = new THREE.CanvasTexture(canvas);
     this.cachedTextures['salinity'] = texture;
     return texture;
@@ -231,28 +224,23 @@ class WaterSimulation3D {
 
   createMoistureTexture() {
     if (this.cachedTextures['moisture']) return this.cachedTextures['moisture'];
-
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1536;
     const ctx = canvas.getContext('2d');
 
-    // Засушливая фоновая база
     ctx.fillStyle = '#1c1712';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Зелено-бирюзовый градиент влажности почвы (NDVI)
-    this.drawHeatSpot(ctx, 1460, 680, 200, 'rgba(16, 185, 129, 0.9)'); // Фергана
-    this.drawHeatSpot(ctx, 1320, 520, 150, 'rgba(14, 165, 233, 0.85)'); // Ташкент
-    this.drawHeatSpot(ctx, 1150, 780, 180, 'rgba(52, 211, 153, 0.8)'); // Самарканд
-    this.drawHeatSpot(ctx, 720, 680, 160, 'rgba(16, 185, 129, 0.75)'); // Нукус
+    this.drawHeatSpot(ctx, 1460, 680, 200, 'rgba(16, 185, 129, 0.9)');
+    this.drawHeatSpot(ctx, 1320, 520, 150, 'rgba(14, 165, 233, 0.85)');
+    this.drawHeatSpot(ctx, 1150, 780, 180, 'rgba(52, 211, 153, 0.8)');
+    this.drawHeatSpot(ctx, 720, 680, 160, 'rgba(16, 185, 129, 0.75)');
 
-    // Влажные пояса рек
     this.drawRiverBelt(ctx, 1380, 1050, 720, 680, 32, 'rgba(14, 165, 233, 0.7)');
     this.drawRiverBelt(ctx, 1500, 650, 580, 360, 26, 'rgba(14, 165, 233, 0.65)');
 
     this.drawGisGrid(ctx, canvas);
-
     const texture = new THREE.CanvasTexture(canvas);
     this.cachedTextures['moisture'] = texture;
     return texture;
@@ -260,23 +248,19 @@ class WaterSimulation3D {
 
   createGroundwaterTexture() {
     if (this.cachedTextures['groundwater']) return this.cachedTextures['groundwater'];
-
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1536;
     const ctx = canvas.getContext('2d');
 
-    // Глубокий синий (глубокий горизонт > 10 м)
     ctx.fillStyle = '#061325';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Критически высокий уровень (< 1.5 - 2.0 м - риск заболачивания и засоления)
-    this.drawHeatSpot(ctx, 740, 700, 190, 'rgba(239, 68, 68, 0.85)'); // Нукус
-    this.drawHeatSpot(ctx, 1150, 820, 150, 'rgba(245, 158, 11, 0.8)'); // Бухара
+    this.drawHeatSpot(ctx, 740, 700, 190, 'rgba(239, 68, 68, 0.85)');
+    this.drawHeatSpot(ctx, 1150, 820, 150, 'rgba(245, 158, 11, 0.8)');
     this.drawHeatSpot(ctx, 580, 520, 240, 'rgba(59, 130, 246, 0.4)');
 
     this.drawGisGrid(ctx, canvas);
-
     const texture = new THREE.CanvasTexture(canvas);
     this.cachedTextures['groundwater'] = texture;
     return texture;
@@ -347,53 +331,214 @@ class WaterSimulation3D {
   }
 
   // =========================================================================
-  // 4D ВРЕМЕННАЯ ШКАЛА (1960–2050 гг.)
+  // СИСТЕМА ПЫЛЕ-СОЛЕВЫХ БУРЬ АРАЛКУМА (PARTICLE VORTEX)
+  // =========================================================================
+  setupAralkumStorm() {
+    const particleCount = 1200;
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const angles = new Float32Array(particleCount);
+    const radii = new Float32Array(particleCount);
+    const speeds = new Float32Array(particleCount);
+
+    const centerX = -18.0;
+    const centerZ = 6.5;
+
+    for (let i = 0; i < particleCount; i++) {
+      angles[i] = Math.random() * Math.PI * 2;
+      radii[i] = 1.0 + Math.random() * 8.5;
+      speeds[i] = 0.5 + Math.random() * 1.5;
+
+      positions[i * 3] = centerX + Math.cos(angles[i]) * radii[i];
+      positions[i * 3 + 1] = 0.2 + Math.random() * 3.5;
+      positions[i * 3 + 2] = centerZ + Math.sin(angles[i]) * radii[i];
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const mat = new THREE.PointsMaterial({
+      color: 0xf5deb3,
+      size: 0.45,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.NormalBlending
+    });
+
+    this.stormMesh = new THREE.Points(geo, mat);
+    this.groupMap.add(this.stormMesh);
+
+    this.animatedObjects.push({
+      update: (delta, time) => {
+        const posAttr = geo.attributes.position;
+        // Буря усиливается при засухе или низком уровне модернизации в современные годы
+        const targetOpacity = this.засуха ? 0.8 : (this.текущий_год >= 2026 && this.уровень_модернизации < 0.4 ? 0.5 : 0.08);
+        mat.opacity += (targetOpacity - mat.opacity) * 0.05;
+
+        for (let i = 0; i < particleCount; i++) {
+          angles[i] += delta * speeds[i] * (this.засуха ? 2.0 : 1.0);
+          radii[i] += delta * 0.3;
+          if (radii[i] > 9.5) {
+            radii[i] = 1.0 + Math.random() * 2.0;
+          }
+
+          const px = centerX + Math.cos(angles[i]) * radii[i] + (radii[i] * 0.4); // снос на восток
+          let py = posAttr.getY(i) + delta * 0.6;
+          if (py > 4.2) py = 0.2;
+          const pz = centerZ + Math.sin(angles[i]) * radii[i];
+
+          posAttr.setXYZ(i, px, py, pz);
+        }
+        posAttr.needsUpdate = true;
+      }
+    });
+  }
+
+  // =========================================================================
+  // СЕТЬ IOT-ДАТЧИКОВ ТЕЛЕМЕТРИИ
+  // =========================================================================
+  setupIoTSensors() {
+    const sensorsData = [
+      { id: "UZB-AMU-KERKI-01", name: "Гидропост Керки (Амударья)", flow: 1420.5, level: 4.82, sal: 0.95, rssi: -84, pos: new THREE.Vector3(8.0, 0.75, 5.8) },
+      { id: "UZB-AMU-NUKUS-02", name: "Гидропост Нукус (Дельта Арала)", flow: 210.0, level: 1.95, sal: 2.85, rssi: -81, pos: new THREE.Vector3(-14.0, 0.25, 5.8) },
+      { id: "KAZ-SYR-CHARD-03", name: "Гидропост Чардара (Сырдарья)", flow: 680.0, level: 3.40, sal: 1.15, rssi: -78, pos: new THREE.Vector3(7.0, 0.75, -8.2) },
+      { id: "KAZ-SYR-KAZAL-04", name: "Гидропост Казалинск (Малый Арал)", flow: 145.0, level: 1.65, sal: 1.80, rssi: -86, pos: new THREE.Vector3(-10.0, 0.25, -10.2) },
+      { id: "AFG-QSH-KALDAR-05", name: "Головной водозабор Кош-Тепа", flow: 320.0, level: 2.10, sal: 0.85, rssi: -89, pos: new THREE.Vector3(12.5, 1.15, 7.8) },
+      { id: "TKM-KRK-ASHG-06", name: "Каракумский канал, ПК-180", flow: 195.0, level: 2.45, sal: 1.40, rssi: -82, pos: new THREE.Vector3(1.0, 0.40, 10.5) }
+    ];
+
+    sensorsData.forEach(s => {
+      const g = new THREE.Group();
+      g.position.copy(s.pos);
+
+      // Корпус датчика (кубик с антенной)
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.35, 0.25), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 }));
+      box.position.y = 0.17;
+      g.add(box);
+
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 6), new THREE.MeshBasicMaterial({ color: 0x94a3b8 }));
+      ant.position.y = 0.55;
+      g.add(ant);
+
+      // Светодиодный индикатор
+      const ledMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), ledMat);
+      led.position.set(0, 0.36, 0.14);
+      g.add(led);
+
+      this.groupMap.add(g);
+
+      g.userData = { isSensor: true, ...s, mesh: box, ledMat };
+      this.iotSensors.push(g);
+
+      // Мигание светодиода
+      this.animatedObjects.push({
+        update: (delta, time) => {
+          const blink = Math.sin(time * 4 + s.pos.x) > 0;
+          const isWarning = (s.sal > 2.0 && this.уровень_модернизации < 0.4) || this.засуха;
+          ledMat.color.setHex(isWarning ? (blink ? 0xf43f5e : 0x7f1d1d) : (blink ? 0x10b981 : 0x064e3b));
+        }
+      });
+    });
+  }
+
+  // =========================================================================
+  // РЕЖИМ DAM: ИНЖЕНЕРНЫЙ РАЗРЕЗ ГЭС (ТОКТОГУЛ / НУРЕК)
+  // =========================================================================
+  buildDamScene() {
+    // Бетонное тело арочно-гравитационной плотины
+    const damGeo = new THREE.BoxGeometry(32, 14, 6);
+    const damMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      roughness: 0.6,
+      metalness: 0.2
+    });
+    const damMesh = new THREE.Mesh(damGeo, damMat);
+    damMesh.position.set(0, 0, 0);
+    this.groupDam.add(damMesh);
+
+    // Водохранилище за плотиной (верхний бьеф)
+    const resGeo = new THREE.BoxGeometry(32, 11, 20);
+    const resMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0284c7,
+      transmission: 0.7,
+      opacity: 0.85,
+      transparent: true,
+      roughness: 0.1
+    });
+    const resMesh = new THREE.Mesh(resGeo, resMat);
+    resMesh.position.set(0, 1.5, -13);
+    this.groupDam.add(resMesh);
+
+    // Напорные водоводы (стальные трубы к турбинам)
+    for (let x = -8; x <= 8; x += 4) {
+      const penstockGeo = new THREE.CylinderGeometry(0.7, 0.7, 12, 16);
+      const penstockMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+      const penstock = new THREE.Mesh(penstockGeo, penstockMat);
+      penstock.rotation.x = Math.PI / 4;
+      penstock.position.set(x, -1, 3.8);
+      this.groupDam.add(penstock);
+    }
+
+    // Машинный зал (Powerhouse) у подножия
+    const powerhouse = new THREE.Mesh(new THREE.BoxGeometry(26, 3.5, 6), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5 }));
+    powerhouse.position.set(0, -5.25, 7.5);
+    this.groupDam.add(powerhouse);
+
+    // Водосброс нижнего бьефа (брызги)
+    const sprayGeo = new THREE.BoxGeometry(18, 1.2, 12);
+    const sprayMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transmission: 0.8, transparent: true, opacity: 0.7 });
+    const spray = new THREE.Mesh(sprayGeo, sprayMat);
+    spray.position.set(0, -6.5, 14);
+    this.groupDam.add(spray);
+
+    this.addCalloutTag("ВЕРХНИЙ БЬЕФ (ОБЪЕМ 19.5 КМ³, НАПОР H = 180 М)", new THREE.Vector3(0, 7.5, -8), "eco", "DAM");
+    this.addCalloutTag("МАШИННЫЙ ЗАЛ: 4 ТУРБИНЫ ФРЕНСИСА (P = 1200 МВТ)", new THREE.Vector3(0, -3.2, 8), "eco", "DAM");
+    this.addCalloutTag("НИЖНИЙ БЬЕФ: ПОПУСК В СЫРДАРЬЮ (Q = 450 М³/С)", new THREE.Vector3(0, -5.5, 16), "eco", "DAM");
+  }
+
+  setCameraForDam() {
+    this.flyCameraTo(new THREE.Vector3(0, 12, 32), new THREE.Vector3(0, 0, 0));
+  }
+
+  // =========================================================================
+  // 4D ВРЕМЕННАЯ ШКАЛА
   // =========================================================================
   установить_год(год) {
     this.текущий_год = parseInt(год, 10);
 
-    // Динамическая трансформация Аральского моря
     if (this.southAralMesh && this.northAralMesh) {
       if (this.текущий_год <= 1965) {
-        // Единое великое море (до кризиса)
         this.southAralMesh.scale.set(3.2, 1.4, 3.2);
         this.southAralMesh.position.set(-17.5, 0.1, 0.5);
         this.southAralMat.color.setHex(0x0284c7);
         this.southAralMat.opacity = 0.95;
         this.northAralMesh.visible = false;
       } else if (this.текущий_год <= 1985) {
-        // Начало интенсивного усыхания и разделения
         this.southAralMesh.scale.set(2.2, 1.0, 2.2);
         this.southAralMesh.position.set(-18.0, 0.05, 3.5);
         this.southAralMat.color.setHex(0x0369a1);
         this.northAralMesh.visible = true;
         this.northAralMesh.scale.set(1.4, 1.0, 1.4);
       } else if (this.текущий_год <= 2005) {
-        // Постройка Кокаральской плотины (Малый Арал возрождается)
         this.northAralMesh.visible = true;
         this.northAralMesh.scale.set(1.0, 1.0, 1.0);
         this.southAralMesh.scale.set(1.1, 0.8, 1.1);
         this.southAralMesh.position.set(-18.5, -0.05, 6.5);
         this.southAralMat.color.setHex(0x1e3a8a);
       } else if (this.текущий_год <= 2026) {
-        // Текущее состояние
         this.northAralMesh.visible = true;
         this.southAralMesh.position.set(-18.5, -0.1, 7.2);
         const scale = 0.6 + this.уровень_модернизации * 0.5 - (this.кош_тепа_отбор / 15) * 0.3;
         this.southAralMesh.scale.set(Math.max(0.2, scale), 1.0, Math.max(0.2, scale));
       } else if (this.текущий_год <= 2035) {
-        // Пик таяния ледников (временный подъем стока в реки)
         const scale = 0.75 + this.уровень_модернизации * 0.6;
         this.southAralMesh.scale.set(scale, 1.0, scale);
       } else {
-        // 2050 год: развилка будущего
         if (this.уровень_модернизации > 0.6) {
-          // Успех: Аралкум стабилизирован, Малый Арал полноводен
           this.southAralMesh.scale.set(1.1, 1.0, 1.1);
           this.southAralMat.color.setHex(0x0284c7);
           this.southAralMat.opacity = 0.9;
         } else {
-          // Полное исчезновение Южного Арала
           this.southAralMesh.scale.set(0.1, 0.2, 0.1);
           this.southAralMat.color.setHex(0x3f1e1e);
           this.southAralMat.opacity = 0.4;
@@ -456,11 +601,7 @@ class WaterSimulation3D {
 
     // Основание
     const baseGeo = new THREE.BoxGeometry(mapW + 0.6, 2.5, mapH + 0.6);
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: 0x0a101d,
-      roughness: 0.4,
-      metalness: 0.6
-    });
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x0a101d, roughness: 0.4, metalness: 0.6 });
     const baseMesh = new THREE.Mesh(baseGeo, baseMat);
     baseMesh.position.set(0, -1.3, 0);
     this.groupMap.add(baseMesh);
@@ -469,7 +610,7 @@ class WaterSimulation3D {
     const edgeLine = new THREE.LineSegments(baseEdges, new THREE.LineBasicMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.4 }));
     baseMesh.add(edgeLine);
 
-    // Река АМУДАРЬЯ
+    // Реки
     const amudaryaPts = [
       new THREE.Vector3(22, 3.2, 12),
       new THREE.Vector3(15, 1.4, 8.5),
@@ -483,7 +624,6 @@ class WaterSimulation3D {
     this.amuMesh = this.createRealisticRiver(this.amudaryaCurve, 0.52, 0x0284c7, 0x38bdf8);
     this.groupMap.add(this.amuMesh);
 
-    // Река СЫРДАРЬЯ
     const syrdaryaPts = [
       new THREE.Vector3(23, 3.6, -7.5),
       new THREE.Vector3(16, 1.6, -5.8),
@@ -496,7 +636,6 @@ class WaterSimulation3D {
     this.syrMesh = this.createRealisticRiver(this.syrdaryaCurve, 0.44, 0x0369a1, 0x0ea5e9);
     this.groupMap.add(this.syrMesh);
 
-    // КАРАКУМСКИЙ КАНАЛ
     const karakumPts = [
       new THREE.Vector3(7.5, 0.55, 6.0),
       new THREE.Vector3(1.0, 0.28, 10.5),
@@ -507,7 +646,6 @@ class WaterSimulation3D {
     this.karakumMesh = this.createRealisticRiver(this.karakumCurve, 0.32, 0x0284c7, 0x00f0ff);
     this.groupMap.add(this.karakumMesh);
 
-    // КАНАЛ КОШ-ТЕПА
     const koshPts = [
       new THREE.Vector3(12.5, 1.0, 7.8),
       new THREE.Vector3(8.5, 0.6, 11.2),
@@ -518,8 +656,7 @@ class WaterSimulation3D {
     this.koshMesh = this.createRealisticRiver(this.koshCurve, 0.40, 0xd97706, 0xfbbf24);
     this.groupMap.add(this.koshMesh);
 
-    // ВОДОЕМЫ
-    // Северный Малый Арал
+    // Водоемы
     const northAralGeo = new THREE.CylinderGeometry(3.2, 3.0, 0.3, 32);
     const northAralMat = new THREE.MeshStandardMaterial({
       color: 0x0284c7,
@@ -532,14 +669,11 @@ class WaterSimulation3D {
     this.northAralMesh.position.set(-16.5, 0.05, -8.5);
     this.groupMap.add(this.northAralMesh);
 
-    // Дамба
     const damGeo = new THREE.BoxGeometry(0.35, 0.45, 1.8);
-    const damMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.5 });
-    const kokaralDam = new THREE.Mesh(damGeo, damMat);
+    const kokaralDam = new THREE.Mesh(damGeo, new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.5 }));
     kokaralDam.position.set(-15.6, 0.15, -7.2);
     this.groupMap.add(kokaralDam);
 
-    // Южный Арал
     const southAralGeo = new THREE.CylinderGeometry(4.2, 3.8, 0.25, 32);
     this.southAralMat = new THREE.MeshStandardMaterial({
       color: 0x1e3a8a,
@@ -552,7 +686,6 @@ class WaterSimulation3D {
     this.southAralMesh.position.set(-18.5, -0.1, 7.2);
     this.groupMap.add(this.southAralMesh);
 
-    // Водохранилища
     this.toktogulMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.6, 0.6, 24), new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.15 }));
     this.toktogulMesh.position.set(17.5, 1.8, -6.5);
     this.groupMap.add(this.toktogulMesh);
@@ -690,7 +823,7 @@ class WaterSimulation3D {
   }
 
   // =========================================================================
-  // РЕЖИМ 2: ИНЖЕНЕРНЫЙ CAD-РАЗРЕЗ (ДВУХУРОВНЕВЫЙ: БЫЛО VS СТАЛО)
+  // РЕЖИМ 2: ИНЖЕНЕРНЫЙ CAD-РАЗРЕЗ
   // =========================================================================
   buildDualTierScene() {
     const topGroup = new THREE.Group();
@@ -780,10 +913,7 @@ class WaterSimulation3D {
     ];
     this.morphCurve = new THREE.CatmullRomCurve3(pipePts);
     const morphGeo = new THREE.TubeGeometry(this.morphCurve, 64, 0.7, 24, false);
-    this.morphMat = new THREE.MeshPhysicalMaterial({
-      color: 0xff334b,
-      roughness: 0.3
-    });
+    this.morphMat = new THREE.MeshPhysicalMaterial({ color: 0xff334b, roughness: 0.3 });
     this.morphMesh = new THREE.Mesh(morphGeo, this.morphMat);
     morphGroup.add(this.morphMesh);
 
@@ -792,7 +922,6 @@ class WaterSimulation3D {
     morphGroup.add(soil);
 
     this.groupMorph.add(morphGroup);
-
     this.addCalloutTag("РЕЖИМ ПЛАВНОЙ ТРАНСФОРМАЦИИ ИНФРАСТРУКТУРЫ", new THREE.Vector3(0, 4.5, 0), "eco", "MORPH");
   }
 
@@ -838,6 +967,7 @@ class WaterSimulation3D {
     this.groupMap.visible = (режим === 'MAP');
     this.groupDual.visible = (режим === 'DUAL');
     this.groupMorph.visible = (режим === 'MORPH');
+    this.groupDam.visible = (режим === 'DAM');
 
     const timelineEl = document.querySelector('.timeline-floating-hud');
     if (timelineEl) {
@@ -847,6 +977,7 @@ class WaterSimulation3D {
     if (режим === 'MAP') this.setCameraForMap();
     else if (режим === 'DUAL') this.setCameraForDual();
     else if (режим === 'MORPH') this.setCameraForMorph();
+    else if (режим === 'DAM') this.setCameraForDam();
 
     this.updateCalloutsVisibility();
   }
@@ -872,7 +1003,6 @@ class WaterSimulation3D {
     this.засуха = data.засуха !== undefined ? data.засуха : this.засуха;
     this.маловодный_год = data.маловодный_год !== undefined ? data.маловодный_год : this.маловодный_год;
 
-    // Пересчет отображения на текущий год
     this.установить_год(this.текущий_год);
 
     if (this.morphMat) {
@@ -952,6 +1082,20 @@ class WaterSimulation3D {
       if (this.текущий_режим !== 'MAP') return;
 
       this.raycaster.setFromCamera(this.mouse, this.camera);
+      
+      // Проверка клика по IoT-сенсорам
+      const sensorMeshes = this.iotSensors.map(s => s.userData.mesh);
+      const sensorHits = this.raycaster.intersectObjects(sensorMeshes);
+      if (sensorHits.length > 0) {
+        const hit = sensorHits[0].object;
+        const sensor = this.iotSensors.find(s => s.userData.mesh === hit);
+        if (sensor) {
+          window.dispatchEvent(new CustomEvent('iot-sensor-selected', { detail: sensor.userData }));
+          return;
+        }
+      }
+
+      // Проверка клика по GIS-маякам
       const interactiveMeshes = this.gisHotspots.map(h => h.userData.mesh);
       const intersects = this.raycaster.intersectObjects(interactiveMeshes);
 
