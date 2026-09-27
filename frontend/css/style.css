@@ -383,6 +383,12 @@ header.hud-header {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gis-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .toolbar-label {

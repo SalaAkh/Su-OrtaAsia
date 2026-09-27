@@ -839,6 +839,11 @@ class WaterSimulation3D {
     this.groupDual.visible = (режим === 'DUAL');
     this.groupMorph.visible = (режим === 'MORPH');
 
+    const timelineEl = document.querySelector('.timeline-floating-hud');
+    if (timelineEl) {
+      timelineEl.style.display = (режим === 'MAP') ? 'flex' : 'none';
+    }
+
     if (режим === 'MAP') this.setCameraForMap();
     else if (режим === 'DUAL') this.setCameraForDual();
     else if (режим === 'MORPH') this.setCameraForMorph();
