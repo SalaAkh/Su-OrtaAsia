@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const koshTepaValue = document.getElementById('kosh-tepa-value');
 
   // Кнопки переключения 3D режимов
+  const btnViewMap = document.getElementById('btn-view-map');
   const btnViewDual = document.getElementById('btn-view-dual');
   const btnViewMorph = document.getElementById('btn-view-morph');
-  const btnViewMap = document.getElementById('btn-view-map');
 
   // Кнопки сценариев
   const btnScenarioNormal = document.getElementById('sc-normal');
@@ -36,6 +36,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Панель предупреждений и таблица городов
   const alertFeed = document.getElementById('alert-feed');
   const citiesTableBody = document.getElementById('cities-table-body');
+
+  // Инспектор узла
+  const inspectorTitle = document.getElementById('inspector-title');
+  const inspectorDesc = document.getElementById('inspector-desc');
+
+  // Быстрая навигация GIS по узлам
+  const navChips = document.querySelectorAll('.nav-chip');
+  navChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      navChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const nodeId = chip.dataset.node;
+      if (nodeId === 'all') {
+        visualizer.setCameraForMap();
+      } else {
+        visualizer.focusOnNode(nodeId);
+      }
+    });
+  });
+
+  // Событие выбора узла кликом по 3D маяку
+  window.addEventListener('gis-node-selected', (e) => {
+    const node = e.detail;
+    if (inspectorTitle && inspectorDesc && node) {
+      inspectorTitle.textContent = node.title;
+      inspectorDesc.textContent = node.desc;
+    }
+  });
 
   // Модальные окна
   const btnOpenLab = document.getElementById('btn-open-lab');
@@ -72,11 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
   labTabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       labTabBtns.forEach(b => b.classList.remove('active'));
-      labTabContents.forEach(c => c.style.display = 'none');
+      labTabContents.forEach(c => c.classList.remove('active'));
 
       btn.classList.add('active');
       const targetTab = document.getElementById(btn.dataset.tab);
-      if (targetTab) targetTab.style.display = 'block';
+      if (targetTab) targetTab.classList.add('active');
     });
   });
 
@@ -94,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Дефицит воды (%)',
           data: [20, 19, 15, 16, 31],
-          backgroundColor: ['#ff334b', '#ffaa00', '#0ea5e9', '#10b981', '#a855f7'],
+          backgroundColor: ['#f43f5e', '#f59e0b', '#0ea5e9', '#10b981', '#a855f7'],
           borderRadius: 4
         }]
       },
@@ -106,12 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
           y: {
             beginAtZero: true,
             max: 100,
-            grid: { color: 'rgba(255, 255, 255, 0.08)' },
-            ticks: { color: '#94a3b8', font: { size: 10 } }
+            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+            ticks: { color: '#64748b', font: { size: 9, family: 'Inter' } }
           },
           x: {
             grid: { display: false },
-            ticks: { color: '#cbd5e1', font: { size: 10 } }
+            ticks: { color: '#94a3b8', font: { size: 9, family: 'Inter' } }
           }
         }
       }
@@ -125,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         labels: ['Орошение оазисов', 'Фильтрация (потери)', 'Испарение', 'Сток в Арал'],
         datasets: [{
           data: [45, 30, 18, 7],
-          backgroundColor: ['#00f0ff', '#ff334b', '#ffaa00', '#0ea5e9'],
+          backgroundColor: ['#00f0ff', '#f43f5e', '#f59e0b', '#0ea5e9'],
           borderWidth: 0
         }]
       },
@@ -135,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         plugins: {
           legend: {
             position: 'right',
-            labels: { color: '#cbd5e1', boxWidth: 10, font: { size: 10 } }
+            labels: { color: '#cbd5e1', boxWidth: 8, font: { size: 9, family: 'Inter' } }
           }
         }
       }
@@ -147,11 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = sim.вычислить_баланс();
 
     // Обновление параметров 3D сцены
-    visualizer.обновить_параметры(
-      sim.уровень_модернизации,
-      sim.кош_тепа_отбор_км3,
-      sim.засуха
-    );
+    visualizer.обновить_состояние({
+      уровень_модернизации: sim.уровень_модернизации,
+      кош_тепа_отбор_км3: sim.кош_тепа_отбор_км3,
+      засуха: sim.засуха,
+      маловодный_год: sim.маловодный_год
+    });
 
     // Нижние метрики
     metricDepletionRisk.textContent = data.риск_текст;
@@ -185,12 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
       cityNames.forEach(c => {
         const info = data.города[c];
         const tr = document.createElement('tr');
-        const badgeCol = info.статус === 'КРИТИЧЕСКИЙ' ? 'color: #ff334b;' : (info.статус === 'ТРЕВОГА' ? 'color: #ffaa00;' : 'color: #00ff9d;');
+        const badgeClass = info.статус === 'КРИТИЧЕСКИЙ' ? 'critical' : (info.статус === 'ТРЕВОГА' ? 'warning' : 'stable');
         tr.innerHTML = `
-          <td style="padding: 6px 4px; font-weight: 700;">${c}</td>
-          <td style="padding: 6px 4px; text-align: center; font-family: monospace;">${info.дефицит_процент}%</td>
-          <td style="padding: 6px 4px; text-align: center; font-family: monospace;">${info.дни_до_истощения > 365 ? 'Стабильно' : info.дни_до_истощения + ' дн.'}</td>
-          <td style="padding: 6px 4px; text-align: right; font-weight: 800; ${badgeCol}">${info.статус}</td>
+          <td style="font-weight: 600; color: #f1f5f9;">${c}</td>
+          <td style="text-align: center; font-family: monospace;">${info.дефицит_процент}%</td>
+          <td style="text-align: center; font-family: monospace;">${info.дни_до_истощения > 365 ? 'Стабильно' : info.дни_до_истощения + ' дн.'}</td>
+          <td style="text-align: right;"><span class="status-tag ${badgeClass}">${info.статус}</span></td>
         `;
         citiesTableBody.appendChild(tr);
       });
@@ -212,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
   managementSlider.addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
     sim.уровень_модернизации = val / 100.0;
-    managementValueBox.textContent = val;
+    managementValueBox.textContent = `${val}%`;
     syncUI();
   });
 
@@ -229,11 +258,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 5. Переключение 3D режимов
   function setActiveViewBtn(btn) {
-    [btnViewDual, btnViewMorph, btnViewMap].forEach(b => {
+    [btnViewMap, btnViewDual, btnViewMorph].forEach(b => {
       if (b) b.classList.remove('active');
     });
     if (btn) btn.classList.add('active');
   }
+
+  btnViewMap.addEventListener('click', () => {
+    setActiveViewBtn(btnViewMap);
+    visualizer.переключить_режим('MAP');
+  });
 
   btnViewDual.addEventListener('click', () => {
     setActiveViewBtn(btnViewDual);
@@ -243,11 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
   btnViewMorph.addEventListener('click', () => {
     setActiveViewBtn(btnViewMorph);
     visualizer.переключить_режим('MORPH');
-  });
-
-  btnViewMap.addEventListener('click', () => {
-    setActiveViewBtn(btnViewMap);
-    visualizer.переключить_режим('MAP');
   });
 
   // 6. Сценарии
@@ -295,17 +324,16 @@ document.addEventListener('DOMContentLoaded', () => {
   btnScenarioConsortium.addEventListener('click', () => {
     resetScenarios();
     btnScenarioConsortium.classList.add('active');
-    // Включение сценария консорциума: Казахстан дает уголь/электроэнергию -> Токтогул копит воду и спускает летом
     sim.уровень_модернизации = 0.70;
     managementSlider.value = 70;
-    managementValueBox.textContent = "70";
+    managementValueBox.textContent = "70%";
     syncUI();
   });
 
   // Первоначальная синхронизация
   syncUI();
 
-  // Автоматический цикл
+  // Автоматический цикл симуляции
   setInterval(() => {
     if (sim.глобальное_обновление) {
       syncUI();
