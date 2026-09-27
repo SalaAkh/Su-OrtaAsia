@@ -1,6 +1,7 @@
 /**
  * Контроллер интерфейса и реактивной аналитики «Су-Орта Азия».
- * Синхронизирует Three.js сцену, Chart.js графики, слайдеры, выноски и Студенческую лабораторию.
+ * Синхронизирует Three.js сцену, Chart.js графики, слайдеры, 4D таймлапс,
+ * GIS слои, AI Диспетчер и Инженерный калькулятор ROI.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,6 +42,74 @@ document.addEventListener('DOMContentLoaded', () => {
   const inspectorTitle = document.getElementById('inspector-title');
   const inspectorDesc = document.getElementById('inspector-desc');
 
+  // =========================================================================
+  // 4D ВРЕМЕННАЯ ШКАЛА (1960–2050 гг.)
+  // =========================================================================
+  const timelineSlider = document.getElementById('timeline-slider');
+  const currentYearDisplay = document.getElementById('current-year-display');
+  const btnTimelinePlay = document.getElementById('btn-timeline-play');
+  const playIcon = document.getElementById('play-icon');
+  const timelineTicks = document.querySelectorAll('.timeline-ticks .tick');
+
+  let timelinePlaying = false;
+  let timelineInterval = null;
+
+  function updateTimelineYear(year) {
+    year = parseInt(year, 10);
+    if (timelineSlider) timelineSlider.value = year;
+    if (currentYearDisplay) currentYearDisplay.textContent = year;
+
+    timelineTicks.forEach(t => {
+      const ty = parseInt(t.dataset.year, 10);
+      t.classList.toggle('active', Math.abs(ty - year) <= 5);
+    });
+
+    visualizer.установить_год(year);
+  }
+
+  if (timelineSlider) {
+    timelineSlider.addEventListener('input', (e) => {
+      updateTimelineYear(e.target.value);
+    });
+  }
+
+  timelineTicks.forEach(tick => {
+    tick.addEventListener('click', () => {
+      const yr = parseInt(tick.dataset.year, 10);
+      updateTimelineYear(yr);
+    });
+  });
+
+  if (btnTimelinePlay) {
+    btnTimelinePlay.addEventListener('click', () => {
+      timelinePlaying = !timelinePlaying;
+      if (timelinePlaying) {
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        timelineInterval = setInterval(() => {
+          let yr = parseInt(timelineSlider.value, 10) + 1;
+          if (yr > 2050) yr = 1960;
+          updateTimelineYear(yr);
+        }, 150);
+      } else {
+        playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+        clearInterval(timelineInterval);
+      }
+    });
+  }
+
+  // =========================================================================
+  // GIS СЛОИ (Спутник, Засоление, Влажность, Грунтовые воды)
+  // =========================================================================
+  const layerChips = document.querySelectorAll('.layer-chip');
+  layerChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      layerChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const layer = chip.dataset.layer;
+      visualizer.переключить_слой(layer);
+    });
+  });
+
   // Быстрая навигация GIS по узлам
   const navChips = document.querySelectorAll('.nav-chip');
   navChips.forEach(chip => {
@@ -65,7 +134,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Модальные окна
+  // =========================================================================
+  // МОДАЛЬНОЕ ОКНО: AI ДИСПЕТЧЕР ВОДОДЕЛЕНИЯ
+  // =========================================================================
+  const btnOpenAi = document.getElementById('btn-open-ai');
+  const btnCloseAi = document.getElementById('btn-close-ai');
+  const aiModal = document.getElementById('ai-modal');
+  const btnApplyAiPlan = document.getElementById('btn-apply-ai-plan');
+
+  if (btnOpenAi && aiModal) {
+    btnOpenAi.addEventListener('click', () => aiModal.style.display = 'flex');
+  }
+  if (btnCloseAi && aiModal) {
+    btnCloseAi.addEventListener('click', () => aiModal.style.display = 'none');
+  }
+
+  if (btnApplyAiPlan) {
+    btnApplyAiPlan.addEventListener('click', () => {
+      // Применение Парето-оптимального режима:
+      resetScenarios();
+      btnScenarioConsortium.classList.add('active');
+      sim.уровень_модернизации = 0.72;
+      managementSlider.value = 72;
+      managementValueBox.textContent = "72%";
+
+      sim.кош_тепа_отбор_км3 = 4.5; // согласованная трансграничная квота
+      koshTepaSlider.value = 4.5;
+      koshTepaValue.textContent = "4.5 км³/год";
+
+      syncUI();
+      aiModal.style.display = 'none';
+
+      // Уведомление в ленту
+      if (alertFeed) {
+        const notify = document.createElement('div');
+        notify.className = 'alert-item stable';
+        notify.style.background = 'rgba(16, 185, 129, 0.15)';
+        notify.style.borderLeftColor = '#10b981';
+        notify.textContent = '🚀 AI Диспетчер: Применен сбалансированный режим (Консорциум Токтогул-Нурек + 72% модернизация). Дефицит ликвидирован.';
+        alertFeed.prepend(notify);
+      }
+    });
+  }
+
+  // =========================================================================
+  // МОДАЛЬНЫЕ ОКНА: ЛАБОРАТОРИЯ, ROI КАЛЬКУЛЯТОР, СПРАВКА, ЭКСПОРТ
+  // =========================================================================
   const btnOpenLab = document.getElementById('btn-open-lab');
   const btnCloseLab = document.getElementById('btn-close-lab');
   const labModal = document.getElementById('lab-modal');
@@ -73,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenHelp = document.getElementById('btn-open-help');
   const btnCloseHelp = document.getElementById('btn-close-help');
   const helpModal = document.getElementById('help-modal');
+
+  const btnExportReport = document.getElementById('btn-export-report');
 
   if (btnOpenLab && labModal) {
     btnOpenLab.addEventListener('click', () => labModal.style.display = 'flex');
@@ -88,9 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCloseHelp.addEventListener('click', () => helpModal.style.display = 'none');
   }
 
+  if (btnExportReport) {
+    btnExportReport.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
   window.addEventListener('click', (e) => {
     if (e.target === labModal) labModal.style.display = 'none';
     if (e.target === helpModal) helpModal.style.display = 'none';
+    if (e.target === aiModal) aiModal.style.display = 'none';
   });
 
   // Вкладки студенческой лаборатории
@@ -108,12 +231,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Расчет в ROI калькуляторе
+  const roiCanalKm = document.getElementById('roi-canal-km');
+  const roiDripHa = document.getElementById('roi-drip-ha');
+  const roiCropType = document.getElementById('roi-crop-type');
+  const roiCapex = document.getElementById('roi-capex');
+  const roiWaterSaved = document.getElementById('roi-water-saved');
+  const roiCropProfit = document.getElementById('roi-crop-profit');
+  const roiPayback = document.getElementById('roi-payback');
+
+  function updateRoiCalc() {
+    if (!roiCanalKm || !roiDripHa) return;
+    const km = parseFloat(roiCanalKm.value) || 0;
+    const ha = (parseFloat(roiDripHa.value) || 0) * 1000;
+    const crop = roiCropType.value;
+
+    const canalCostMln = km * 0.45;
+    const dripCostMln = (ha * 1800) / 1e6;
+    const totalCapexMln = canalCostMln + dripCostMln;
+
+    const waterCanalKm3 = km * 0.0035;
+    const waterDripKm3 = (ha * 6000) / 1e9;
+    const totalWaterKm3 = waterCanalKm3 + waterDripKm3;
+
+    let profitPerHa = 650;
+    if (crop === 'orchard') profitPerHa = 1400;
+    if (crop === 'wheat') profitPerHa = 420;
+
+    const annualProfitMln = (ha * profitPerHa) / 1e6 + totalWaterKm3 * 15;
+    const paybackYears = Math.max(1.2, totalCapexMln / Math.max(annualProfitMln, 1));
+
+    if (roiCapex) roiCapex.textContent = `$${(totalCapexMln / 1000).toFixed(2)} млрд`;
+    if (roiWaterSaved) roiWaterSaved.textContent = `+${totalWaterKm3.toFixed(1)} км³/год`;
+    if (roiCropProfit) roiCropProfit.textContent = `+$${Math.round(annualProfitMln)} млн/год`;
+    if (roiPayback) roiPayback.textContent = `${paybackYears.toFixed(1)} года`;
+  }
+
+  [roiCanalKm, roiDripHa, roiCropType].forEach(el => {
+    if (el) el.addEventListener('input', updateRoiCalc);
+  });
+  updateRoiCalc();
+
+  // Расчет в инженерной песочнице
+  const sandboxMat = document.getElementById('sandbox-material');
+  const sandboxQ0 = document.getElementById('sandbox-q0');
+  const sandboxResult = document.getElementById('sandbox-result-box');
+
+  function updateSandboxCalc() {
+    if (!sandboxMat || !sandboxQ0 || !sandboxResult) return;
+    const mat = sandboxMat.value;
+    const q0 = parseFloat(sandboxQ0.value) || 200;
+
+    let eff = 0.55;
+    if (mat === 'clay') eff = 0.78;
+    if (mat === 'concrete') eff = 0.92;
+    if (mat === 'geomembrane') eff = 0.985;
+
+    const qEnd = q0 * eff;
+    const loss = q0 - qEnd;
+
+    sandboxResult.innerHTML = `
+      <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8;">
+        КПД канала: ${(eff * 100).toFixed(1)}% | Доходит до потребителя: ${qEnd.toFixed(2)} м³/с (Потери: ${loss.toFixed(2)} м³/с)
+      </div>
+      <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 4px;">
+        ${eff > 0.9 ? 'Предотвращен подъем минерализованных грунтовых вод и капиллярное засоление прилегающих земель.' : '⚠️ Высокий уровень фильтрации вызывает подтопление и солончаки (УГВ < 1.8 м).'}
+      </div>
+    `;
+  }
+
+  if (sandboxMat) sandboxMat.addEventListener('change', updateSandboxCalc);
+  if (sandboxQ0) sandboxQ0.addEventListener('input', updateSandboxCalc);
+  updateSandboxCalc();
+
   // 2. Инициализация графиков Chart.js
   let citiesChart, balanceChart;
   initCharts();
 
   function initCharts() {
-    // График дефицита городов
     const ctxCities = document.getElementById('citiesChart').getContext('2d');
     citiesChart = new Chart(ctxCities, {
       type: 'bar',
@@ -145,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // График баланса бассейна
     const ctxBalance = document.getElementById('balanceChart').getContext('2d');
     balanceChart = new Chart(ctxBalance, {
       type: 'doughnut',
@@ -174,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncUI() {
     const data = sim.вычислить_баланс();
 
-    // Обновление параметров 3D сцены
     visualizer.обновить_состояние({
       уровень_модернизации: sim.уровень_модернизации,
       кош_тепа_отбор_км3: sim.кош_тепа_отбор_км3,

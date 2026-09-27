@@ -74,6 +74,128 @@ body {
 }
 
 /* ==========================================================================
+   ПЛАВАЮЩИЙ 4D ТАЙМЛАПС ХУД (TOP CENTER)
+   ========================================================================== */
+.timeline-floating-hud {
+  position: absolute;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  background: rgba(8, 14, 28, 0.78);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glow);
+  border-radius: 14px;
+  padding: 8px 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  width: 580px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeline-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #7dd3fc;
+}
+
+.timeline-year-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+#current-year-display {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+.year-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.timeline-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-timeline-play {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-timeline-play:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+}
+
+.timeline-track-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-track-wrap input[type="range"] {
+  width: 100%;
+  accent-color: #00f0ff;
+  height: 6px;
+  cursor: pointer;
+}
+
+.timeline-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: #64748b;
+}
+
+.timeline-ticks .tick {
+  text-align: center;
+  cursor: pointer;
+  line-height: 1.1;
+  transition: color 0.15s;
+}
+
+.timeline-ticks .tick:hover, .timeline-ticks .tick.active {
+  color: #00f0ff;
+  font-weight: 700;
+}
+
+/* ==========================================================================
    ВЕРХНИЙ ХЕДЕР
    ========================================================================== */
 header.hud-header {
@@ -180,14 +302,37 @@ header.hud-header {
 /* Действия в хедере */
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
-.btn-lab, .btn-help {
+.btn-ai-dispatcher {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.18), rgba(14, 165, 233, 0.25));
+  border: 1px solid #00f0ff;
+  color: #e0f2fe;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 15px;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-ai-dispatcher:hover {
+  background: linear-gradient(135deg, #00f0ff, #0ea5e9);
+  color: #060913;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+}
+
+.btn-lab, .btn-export, .btn-help {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
   border-radius: 8px;
   font-family: var(--font-sans);
   font-size: 0.8rem;
@@ -204,7 +349,17 @@ header.hud-header {
 
 .btn-lab:hover {
   background: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+  color: #fff;
+}
+
+.btn-export {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.btn-export:hover {
+  background: rgba(59, 130, 246, 0.3);
   color: #fff;
 }
 
@@ -214,20 +369,15 @@ header.hud-header {
   color: #cbd5e1;
 }
 
-.btn-help:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
 /* ==========================================================================
-   БЫСТРАЯ GIS НАВИГАЦИЯ ПО КАРТЕ
+   GIS ПАНЕЛЬ УПРАВЛЕНИЯ СЛОЯМИ И НАВИГАЦИЕЙ
    ========================================================================== */
-.gis-quick-nav {
+.gis-toolbar {
   position: relative;
   z-index: 25;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 6px 24px;
   background: rgba(8, 14, 28, 0.65);
   backdrop-filter: blur(12px);
@@ -235,8 +385,8 @@ header.hud-header {
   overflow-x: auto;
 }
 
-.nav-label {
-  font-size: 0.74rem;
+.toolbar-label {
+  font-size: 0.72rem;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
@@ -244,7 +394,19 @@ header.hud-header {
   white-space: nowrap;
 }
 
-.nav-chip {
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gis-layer-selector, .gis-quick-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.layer-chip, .nav-chip {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--border-subtle);
   color: #94a3b8;
@@ -258,16 +420,17 @@ header.hud-header {
   transition: all 0.2s ease;
 }
 
-.nav-chip:hover {
+.layer-chip:hover, .nav-chip:hover {
   color: #38bdf8;
   border-color: rgba(14, 165, 233, 0.4);
   background: rgba(14, 165, 233, 0.1);
 }
 
-.nav-chip.active {
+.layer-chip.active, .nav-chip.active {
   background: rgba(14, 165, 233, 0.25);
   border-color: #0ea5e9;
   color: #fff;
+  font-weight: 600;
 }
 
 /* ==========================================================================
@@ -481,7 +644,7 @@ header.hud-header {
 
 /* ==========================================================================
    ПРАВАЯ ПАНЕЛЬ: АНАЛИТИКА
-   ========================================================================== */
+   ========================================================================= */
 .chart-container {
   position: relative;
   width: 100%;
@@ -801,6 +964,187 @@ input:checked + .slider-round:before {
 }
 
 /* ==========================================================================
+   КАРТОЧКА AI ОПТИМИЗАТОРА
+   ========================================================================== */
+.ai-recommendation-card {
+  background: rgba(10, 20, 38, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.ai-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-pill-active {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.ai-acc {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #10b981;
+}
+
+.ai-plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.ai-plan-item {
+  display: flex;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 14px;
+  align-items: flex-start;
+}
+
+.plan-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-plan-item p {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+.ai-metrics-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ai-stat-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.66rem;
+  color: #94a3b8;
+}
+
+.stat-val {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.btn-apply-plan {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #0ea5e9, #00f0ff);
+  border: none;
+  border-radius: 8px;
+  color: #060913;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.35);
+}
+
+.btn-apply-plan:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+}
+
+/* ==========================================================================
+   ROI И ЭКОНОМИЧЕСКИЙ КАЛЬКУЛЯТОР
+   ========================================================================== */
+.roi-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.roi-input-group label {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.roi-input-group input, .roi-input-group select {
+  width: 100%;
+  padding: 7px 10px;
+  background: #0b1528;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+}
+
+.roi-results-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.roi-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.roi-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.roi-val {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.sandbox-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ==========================================================================
    МОДАЛЬНЫЕ ОКНА
    ========================================================================== */
 .lab-modal {
@@ -923,4 +1267,28 @@ input:checked + .slider-round:before {
   font-size: 0.78rem;
   color: #38bdf8;
   overflow-x: auto;
+}
+
+/* ==========================================================================
+   СТИЛИ ПЕЧАТИ (ОТЧЕТ МКВК)
+   ========================================================================== */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+  }
+  #viewport-container, .timeline-floating-hud, .gis-toolbar, header.hud-header, footer.hud-bottom-bar, .scenario-grid, .kosh-slider-card {
+    display: none !important;
+  }
+  .hud-workspace {
+    display: block !important;
+  }
+  .hud-panel {
+    width: 100% !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
 }
