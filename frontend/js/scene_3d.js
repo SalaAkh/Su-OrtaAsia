@@ -162,6 +162,34 @@ class WaterSimulation3D {
     this.drawRiverBelt(ctx, 1380, 1050, 720, 680, 24, '#315c28');
     this.drawRiverBelt(ctx, 1500, 650, 580, 360, 18, '#32602a');
 
+    // Каспийское море на западе спутниковой подложки
+    const caspianWaterGrad = ctx.createLinearGradient(0, 0, 340, 0);
+    caspianWaterGrad.addColorStop(0, '#023e8a');
+    caspianWaterGrad.addColorStop(0.5, '#0077b6');
+    caspianWaterGrad.addColorStop(0.85, '#0096c7');
+    caspianWaterGrad.addColorStop(1, '#00b4d8');
+    ctx.fillStyle = caspianWaterGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, 80);
+    ctx.bezierCurveTo(240, 180, 310, 500, 290, 800);
+    ctx.bezierCurveTo(270, 1050, 220, 1320, 320, 1536);
+    ctx.lineTo(0, 1536);
+    ctx.closePath();
+    ctx.fill();
+
+    // Залив Кара-Богаз-Гол на восточном берегу Каспия
+    ctx.fillStyle = '#0d9488';
+    ctx.beginPath();
+    ctx.ellipse(320, 830, 70, 55, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Дельта и русло реки Жайык (Урал) на севере
+    this.drawRiverBelt(ctx, 210, 0, 240, 360, 16, '#00b4d8');
+    this.drawOasis(ctx, 240, 350, 80, 50, '#2d5a27', '#437c35');
+
     const saltGrad = ctx.createRadialGradient(580, 520, 10, 580, 520, 200);
     saltGrad.addColorStop(0, 'rgba(245, 248, 255, 0.9)');
     saltGrad.addColorStop(0.5, 'rgba(215, 225, 235, 0.6)');
@@ -212,6 +240,10 @@ class WaterSimulation3D {
     ctx.ellipse(580, 520, 240, 260, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // Экстремальная минерализация залива Кара-Богаз-Гол (>300 г/л)
+    this.drawHeatSpot(ctx, 320, 830, 110, 'rgba(255, 30, 80, 0.95)');
+    this.drawHeatSpot(ctx, 240, 350, 90, 'rgba(245, 160, 0, 0.65)');
+
     this.drawHeatSpot(ctx, 740, 700, 180, 'rgba(255, 80, 40, 0.8)');
     this.drawHeatSpot(ctx, 1150, 820, 160, 'rgba(245, 160, 0, 0.7)');
     this.drawRiverBelt(ctx, 1380, 1050, 720, 680, 38, 'rgba(255, 120, 20, 0.6)');
@@ -231,6 +263,10 @@ class WaterSimulation3D {
 
     ctx.fillStyle = '#1c1712';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Влажность над Каспийским морем
+    this.drawHeatSpot(ctx, 150, 700, 240, 'rgba(14, 165, 233, 0.9)');
+    this.drawHeatSpot(ctx, 210, 360, 160, 'rgba(16, 185, 129, 0.8)');
 
     this.drawHeatSpot(ctx, 1460, 680, 200, 'rgba(16, 185, 129, 0.9)');
     this.drawHeatSpot(ctx, 1320, 520, 150, 'rgba(14, 165, 233, 0.85)');
@@ -403,7 +439,8 @@ class WaterSimulation3D {
       { id: "KAZ-SYR-CHARD-03", name: "Гидропост Чардара (Сырдарья)", flow: 680.0, level: 3.40, sal: 1.15, rssi: -78, pos: new THREE.Vector3(7.0, 0.75, -8.2) },
       { id: "KAZ-SYR-KAZAL-04", name: "Гидропост Казалинск (Малый Арал)", flow: 145.0, level: 1.65, sal: 1.80, rssi: -86, pos: new THREE.Vector3(-10.0, 0.25, -10.2) },
       { id: "AFG-QSH-KALDAR-05", name: "Головной водозабор Кош-Тепа", flow: 320.0, level: 2.10, sal: 0.85, rssi: -89, pos: new THREE.Vector3(12.5, 1.15, 7.8) },
-      { id: "TKM-KRK-ASHG-06", name: "Каракумский канал, ПК-180", flow: 195.0, level: 2.45, sal: 1.40, rssi: -82, pos: new THREE.Vector3(1.0, 0.40, 10.5) }
+      { id: "TKM-KRK-ASHG-06", name: "Каракумский канал, ПК-180", flow: 195.0, level: 2.45, sal: 1.40, rssi: -82, pos: new THREE.Vector3(1.0, 0.40, 10.5) },
+      { id: "KAZ-CASP-AKTAU-07", name: "Гидропост Актау (Каспийское море)", flow: 0.0, level: -28.52, sal: 12.8, rssi: -79, pos: new THREE.Vector3(-24.5, 0.35, -6.5) }
     ];
 
     sensorsData.forEach(s => {
@@ -545,6 +582,24 @@ class WaterSimulation3D {
         }
       }
     }
+
+    if (this.caspianMesh) {
+      if (this.текущий_год <= 1978) {
+        this.caspianMesh.scale.set(0.96, 0.9, 0.96);
+        if (this.caspianMat) this.caspianMat.color.setHex(0x0284c7);
+      } else if (this.текущий_год <= 1995) {
+        this.caspianMesh.scale.set(1.04, 1.1, 1.04);
+        if (this.caspianMat) this.caspianMat.color.setHex(0x00f0ff);
+      } else if (this.текущий_год <= 2026) {
+        const sc = 1.0 - (this.засуха ? 0.08 : 0.02);
+        this.caspianMesh.scale.set(sc, 1.0, sc);
+        if (this.caspianMat) this.caspianMat.color.setHex(0x0284c7);
+      } else {
+        const sc = 0.92 - (this.засуха ? 0.1 : 0.0);
+        this.caspianMesh.scale.set(sc, 0.85, sc);
+        if (this.caspianMat) this.caspianMat.color.setHex(0x0369a1);
+      }
+    }
   }
 
   // =========================================================================
@@ -581,6 +636,17 @@ class WaterSimulation3D {
       const saryDist = Math.hypot(x - (-12), y - (-2));
       if (saryDist < 4) {
         z -= (1.0 - saryDist / 4) * 0.9;
+      }
+
+      // Впадина Каспийского моря на западе (-28.5 м БС)
+      if (x < -18.5) {
+        const caspFactor = Math.min(1.0, (-18.5 - x) / 7.5);
+        z -= caspFactor * 1.65;
+      }
+
+      const garabogazDist = Math.hypot(x - (-21.5), y - (-3.0));
+      if (garabogazDist < 3.5) {
+        z -= (1.0 - garabogazDist / 3.5) * 0.95;
       }
 
       pos.setZ(i, z);
@@ -686,6 +752,51 @@ class WaterSimulation3D {
     this.southAralMesh.position.set(-18.5, -0.1, 7.2);
     this.groupMap.add(this.southAralMesh);
 
+    // Каспийское море (водное зеркало на западе)
+    const caspianGeo = new THREE.BoxGeometry(8.5, 0.35, 30.0);
+    this.caspianMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      roughness: 0.1,
+      metalness: 0.35,
+      transparent: true,
+      opacity: 0.92
+    });
+    this.caspianMesh = new THREE.Mesh(caspianGeo, this.caspianMat);
+    this.caspianMesh.position.set(-25.5, -0.12, 0.0);
+    this.groupMap.add(this.caspianMesh);
+
+    // Залив Кара-Богаз-Гол
+    const garabogazGeo = new THREE.CylinderGeometry(2.4, 2.1, 0.25, 32);
+    this.garabogazMat = new THREE.MeshStandardMaterial({
+      color: 0x0d9488,
+      roughness: 0.18,
+      metalness: 0.25,
+      transparent: true,
+      opacity: 0.88
+    });
+    this.garabogazMesh = new THREE.Mesh(garabogazGeo, this.garabogazMat);
+    this.garabogazMesh.position.set(-21.5, -0.06, 3.0);
+    this.groupMap.add(this.garabogazMesh);
+
+    const saltRimGeo = new THREE.RingGeometry(2.2, 2.7, 32);
+    const saltRimMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+    const saltRim = new THREE.Mesh(saltRimGeo, saltRimMat);
+    saltRim.rotation.x = -Math.PI / 2;
+    saltRim.position.set(-21.5, 0.07, 3.0);
+    this.groupMap.add(saltRim);
+
+    // Река Жайык (Урал), впадающая в Северный Каспий
+    const uralPts = [
+      new THREE.Vector3(-24.5, 1.4, -20.0),
+      new THREE.Vector3(-24.8, 0.8, -16.0),
+      new THREE.Vector3(-25.2, 0.3, -12.5),
+      new THREE.Vector3(-25.6, -0.05, -9.5)
+    ];
+    this.uralCurve = new THREE.CatmullRomCurve3(uralPts);
+    this.uralMesh = this.createRealisticRiver(this.uralCurve, 0.36, 0x0369a1, 0x00f0ff);
+    this.groupMap.add(this.uralMesh);
+    this.createFlowParticles(this.uralCurve, 90, 0x00f0ff);
+
     this.toktogulMesh = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.6, 0.6, 24), new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.15 }));
     this.toktogulMesh.position.set(17.5, 1.8, -6.5);
     this.groupMap.add(this.toktogulMesh);
@@ -703,6 +814,10 @@ class WaterSimulation3D {
     this.groupMap.add(this.shardaraMesh);
 
     // GIS Маяки
+    this.createGisBeacon("caspian", "🌊 Каспийское море", "Крупнейший в мире бессточный водоем (371 000 км²). Уровень: -28.5 м БС. Критическое обмеление северного шельфа, дельты Волги и Урала (Жайык).", new THREE.Vector3(-25.5, 0.9, -1.0), 0x00f0ff);
+    this.createGisBeacon("garabogaz", "🧂 Залив Кара-Богаз-Гол", "Уникальный природный соляной испаритель Каспия (18 000 км²). Соленость до 310 г/л. Крупнейшее в мире месторождение мирабилита.", new THREE.Vector3(-21.5, 0.8, 3.0), 0xf59e0b);
+    this.createGisBeacon("caspian_maek", "🏭 Опреснение МАЭК (Актау)", "Ключевой опреснительный комплекс Казахстана на Каспии (52 000 м³/сут) для питьевого и технического водоснабжения Мангистау.", new THREE.Vector3(-24.5, 0.9, -6.5), 0x10b981);
+
     this.createGisBeacon("aral_north", "🌊 Северный Арал (Малый Арал)", "Кокаральская плотина поддерживает уровень 42.0 м БС. Соленость снижена до 11 г/л, промысловое рыболовство восстановлено.", new THREE.Vector3(-16.5, 0.8, -8.5), 0x00f0ff);
     this.createGisBeacon("aral_south", "🏜️ Южный Арал (Аралкум)", "Критическое усыхание (соленость > 140 г/л). Пыльно-солевые бури выносят до 75 млн тонн соли ежегодно.", new THREE.Vector3(-18.5, 0.8, 7.2), 0xff334b);
     this.createGisBeacon("kosh_tepa", "⚠️ Канал Кош-Тепа (Афганистан)", "Крупнейший ирригационный проект Афганистана (285 км). Водозабор до 15 км³/год без участия в МКВК создает дефицит в низовьях Амударьи.", new THREE.Vector3(10.5, 1.6, 9.2), 0xffa500);

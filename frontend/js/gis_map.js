@@ -36,10 +36,10 @@ class WaterGisMap {
     const el = document.getElementById(this.containerId);
     if (!el) return;
 
-    // Центр: Бассейн Аральского моря (Узбекистан, Казахстан, Туркменистан, Таджикистан, Кыргызстан)
+    // Центр: Бассейны Аральского и Каспийского морей (Казахстан, Узбекистан, Туркменистан, Таджикистан, Кыргызстан)
     this.map = L.map(this.containerId, {
-      center: [42.6, 63.8],
-      zoom: 6,
+      center: [43.0, 59.5],
+      zoom: 5.5,
       minZoom: 4,
       maxZoom: 13,
       zoomControl: false,
@@ -75,6 +75,7 @@ class WaterGisMap {
     this.tileLayers['labels'].addTo(this.map);
 
     // Построение векторной гидросети
+    this.buildCaspianSea();
     this.buildAralSea();
     this.buildRivers();
     this.buildHydraulicNodes();
@@ -97,6 +98,76 @@ class WaterGisMap {
     } else if (type === 'dark') {
       this.tileLayers['dark'].addTo(this.map);
     }
+  }
+
+  // =========================================================================
+  // ОЧЕРТАНИЯ КАСПИЙСКОГО МОРЯ И ЗАЛИВА КАРА-БОГАЗ-ГОЛ
+  // =========================================================================
+  buildCaspianSea() {
+    const geo = window.REALISTIC_RIVERS || {};
+
+    // 1. Контур Каспийского моря (371 000 км², уровень -28.5 м БС)
+    const caspianCoords = geo.caspianSea || [
+      [46.85, 51.75], [46.50, 52.20], [45.80, 51.60], [45.20, 51.10], [44.50, 50.80],
+      [43.65, 51.16], [43.10, 51.60], [42.50, 52.50], [41.90, 52.80], [41.40, 52.85],
+      [41.20, 52.80], [40.80, 52.85], [40.02, 52.96], [39.50, 53.80], [38.50, 54.00],
+      [37.40, 54.00], [36.85, 53.50], [36.80, 51.00], [37.40, 49.50], [38.40, 48.85],
+      [39.20, 49.30], [40.10, 49.85], [40.50, 50.05], [41.20, 49.20], [41.90, 48.60],
+      [42.80, 47.60], [44.00, 47.40], [45.30, 47.50], [46.30, 48.00], [46.70, 49.50],
+      [46.95, 50.80], [47.10, 51.92], [46.85, 51.75]
+    ];
+
+    this.lakeLayers['caspian_sea'] = L.polygon(caspianCoords, {
+      color: '#38bdf8',
+      weight: 2.2,
+      fillColor: '#0284c7',
+      fillOpacity: 0.58,
+      interactive: true
+    }).addTo(this.map);
+
+    this.lakeLayers['caspian_sea'].bindTooltip(
+      '<strong>Каспийское море</strong><br>Площадь: 371 000 км² | Уровень: -28.5 м БС<br>Крупнейший бессточный водоем планеты.<br><span style="color:#38bdf8;">Притоки: Волга (~240 км³/год), Жайык/Урал (~8.5 км³/год), Кура</span>',
+      { className: 'gis-custom-tooltip' }
+    );
+
+    // 2. Залив Кара-Богаз-Гол (соляная лагуна-испаритель Каспия)
+    const garabogazCoords = geo.garabogaz || [
+      [41.15, 52.90], [40.95, 53.40], [41.05, 54.10], [41.35, 54.60], [41.75, 54.40],
+      [41.85, 53.80], [41.65, 53.15], [41.38, 52.88], [41.15, 52.90]
+    ];
+
+    this.lakeLayers['garabogaz'] = L.polygon(garabogazCoords, {
+      color: '#fbbf24',
+      weight: 1.8,
+      fillColor: '#d97706',
+      fillOpacity: 0.45,
+      interactive: true
+    }).addTo(this.map);
+
+    this.lakeLayers['garabogaz'].bindTooltip(
+      '<strong>Залив Кара-Богаз-Гол (Туркменистан)</strong><br>Площадь: 18 000 км² | Соленость: до 310 г/л<br>Природный солевой испаритель Каспийского бассейна.',
+      { className: 'gis-custom-tooltip' }
+    );
+
+    // 3. Зона мелководного шельфа Северного Каспия (уязвимость к регрессии)
+    const northCaspianShelfCoords = [
+      [47.10, 51.92], [46.85, 51.75], [46.40, 51.90], [45.70, 50.80],
+      [45.30, 48.50], [46.30, 48.00], [46.90, 50.20], [47.10, 51.92]
+    ];
+
+    this.lakeLayers['north_caspian_shallow'] = L.polygon(northCaspianShelfCoords, {
+      color: '#f43f5e',
+      weight: 1.2,
+      dashArray: '4, 6',
+      fillColor: '#e11d48',
+      fillOpacity: 0.16,
+      interactive: true
+    }).addTo(this.map);
+
+    this.lakeLayers['north_caspian_shallow'].bindTooltip(
+      '<strong>Северный Каспий (Мелководный шельф)</strong><br>Средняя глубина: 4.4 м | Зона риска ускоренного обмеления при падении стока рек',
+      { className: 'gis-custom-tooltip' }
+    );
   }
 
   // =========================================================================
@@ -300,6 +371,33 @@ class WaterGisMap {
       '<strong>Канал Кош-Тепа (Афганистан)</strong><br>Протяженность: 285 км | Водозабор: до 15 км³/год<br><span style="color:#f59e0b;">Спутниковая трассировка строительного русла</span>',
       { className: 'gis-custom-tooltip' }
     );
+
+    // 5. РЕКА ЖАЙЫК / УРАЛ (Уральск -> Атырау -> Северный Каспий)
+    const zhaiykCoords = geo.zhaiyk || [
+      [51.22, 51.37], [50.52, 51.52], [49.88, 51.62], [49.20, 51.75],
+      [48.45, 51.84], [47.70, 51.87], [47.10, 51.92], [46.85, 51.75]
+    ];
+
+    L.polyline(zhaiykCoords, {
+      color: '#00264d',
+      weight: 5.0,
+      opacity: 0.6,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(this.map);
+
+    this.riverLayers['zhaiyk'] = L.polyline(zhaiykCoords, {
+      color: '#00f0ff',
+      weight: 3.2,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(this.map);
+
+    this.riverLayers['zhaiyk'].bindTooltip(
+      '<strong>Река Жайык (Урал)</strong><br>Длина: 2428 км | Сток: 8.5 км³/год<br><span style="color:#00f0ff;">Главная водная артерия Западного Казахстана, питающая Северный Каспий</span>',
+      { className: 'gis-custom-tooltip' }
+    );
   }
 
   // =========================================================================
@@ -362,6 +460,38 @@ class WaterGisMap {
         desc: 'Створ забора воды из Амударьи без квот МКВК',
         color: '#f59e0b',
         icon: '⚠️'
+      },
+      {
+        id: 'caspian_maek',
+        name: 'Опреснительный комплекс МАЭК (г. Актау, Казахстан)',
+        latlng: [43.62, 51.20],
+        desc: 'Мощность: 52 000 м³/сут | Термическая дистилляция и обратный осмос морской воды Каспия для Мангистау.',
+        color: '#00f0ff',
+        icon: '🏭'
+      },
+      {
+        id: 'garabogaz',
+        name: 'Залив-испаритель Кара-Богаз-Гол (Туркменистан)',
+        latlng: [41.35, 53.58],
+        desc: 'Площадь: 18 000 км² | Соленость: 310 г/л<br>Естественный регулятор уровня и солевого баланса Каспия.',
+        color: '#f59e0b',
+        icon: '🧂'
+      },
+      {
+        id: 'atyrau_delta',
+        name: 'Дельта реки Жайык / Сев. Каспий (Атырау)',
+        latlng: [46.95, 51.80],
+        desc: 'Сток Жайыка (Урала): 8.5 км³/год | Ключевая экологическая зона нагула осетровых рыб Северного Каспия.',
+        color: '#10b981',
+        icon: '🐟'
+      },
+      {
+        id: 'turkmenbashi_port',
+        name: 'Международный морской порт Туркменбаши',
+        latlng: [40.02, 52.96],
+        desc: 'Главный морской порт Туркменистана | Опреснительные системы водоснабжения побережья.',
+        color: '#38bdf8',
+        icon: '⚓'
       }
     ];
 
@@ -397,7 +527,10 @@ class WaterGisMap {
       { name: 'Самарканд', latlng: [39.6542, 66.9597], pop: '1.05 млн', src: 'р. Зеравшан' },
       { name: 'Ашхабад', latlng: [37.9601, 58.3261], pop: '1.03 млн', src: 'Каракумский канал' },
       { name: 'Нукус', latlng: [42.4602, 59.6166], pop: '0.34 млн', src: 'Низовья Амударьи' },
-      { name: 'Кызылорда', latlng: [44.8488, 65.4823], pop: '0.28 млн', src: 'Низовья Сырдарьи' }
+      { name: 'Кызылорда', latlng: [44.8488, 65.4823], pop: '0.28 млн', src: 'Низовья Сырдарьи' },
+      { name: 'Актау', latlng: [43.6500, 51.1600], pop: '0.21 млн', src: 'Опреснение Каспия (МАЭК) / водовод' },
+      { name: 'Атырау', latlng: [47.1000, 51.9200], pop: '0.36 млн', src: 'р. Жайык (Урал) / Сев. Каспий' },
+      { name: 'Туркменбаши', latlng: [40.0200, 52.9600], pop: '0.085 млн', src: 'Опреснение Каспия / оазисы' }
     ];
 
     cities.forEach(c => {
@@ -422,7 +555,9 @@ class WaterGisMap {
       { id: "UZB-AMU-NUKUS-02", name: "Гидропост Нукус (Дельта)", latlng: [42.46, 59.61], flow: 210.0, level: 1.95, sal: 2.85 },
       { id: "KAZ-SYR-CHARD-03", name: "Гидропост Чардара", latlng: [41.25, 67.97], flow: 680.0, level: 3.40, sal: 1.15 },
       { id: "KAZ-SYR-KAZAL-04", name: "Гидропост Казалинск", latlng: [45.76, 62.15], flow: 145.0, level: 1.65, sal: 1.80 },
-      { id: "TKM-KRK-ASHG-06", name: "Каракумский канал, ПК-180", latlng: [37.60, 63.50], flow: 195.0, level: 2.45, sal: 1.40 }
+      { id: "TKM-KRK-ASHG-06", name: "Каракумский канал, ПК-180", latlng: [37.60, 63.50], flow: 195.0, level: 2.45, sal: 1.40 },
+      { id: "KAZ-CASP-AKTAU-07", name: "Гидропост Актау (Каспийское море)", latlng: [43.64, 51.15], flow: 0.0, level: -28.52, sal: 12.8 },
+      { id: "KAZ-URAL-ATYRAU-08", name: "Гидропост Атырау (р. Жайык / Урал)", latlng: [47.11, 51.90], flow: 285.0, level: 2.15, sal: 0.65 }
     ];
 
     sensors.forEach(s => {
@@ -439,7 +574,7 @@ class WaterGisMap {
           detail: { ...s, rssi: -82 }
         }));
       });
-      m.bindTooltip(`📡 ${s.name}<br>Расход: ${s.flow} м³/с`, { className: 'gis-custom-tooltip' });
+      m.bindTooltip(`📡 ${s.name}<br>${s.flow ? `Расход: ${s.flow} м³/с` : `Уровень: ${s.level} м БС`}`, { className: 'gis-custom-tooltip' });
       this.markerLayers[s.id] = m;
     });
   }
@@ -482,11 +617,28 @@ class WaterGisMap {
         color: isDry ? '#7f1d1d' : '#38bdf8'
       });
     }
+
+    // Реакция Каспийского моря и залива Кара-Богаз-Гол:
+    if (this.lakeLayers['caspian_sea']) {
+      const isStressed = this.isDrought || this.isLowWater;
+      this.lakeLayers['caspian_sea'].setStyle({
+        fillOpacity: isStressed ? 0.45 : 0.62,
+        color: isStressed ? '#0284c7' : '#38bdf8'
+      });
+    }
+
+    if (this.lakeLayers['north_caspian_shallow']) {
+      const isCrit = this.isDrought;
+      this.lakeLayers['north_caspian_shallow'].setStyle({
+        fillOpacity: isCrit ? 0.35 : 0.16,
+        color: isCrit ? '#dc2626' : '#f43f5e'
+      });
+    }
   }
 
   установить_год(год) {
     this.currentYear = parseInt(год, 10);
-    // 4D трансформация:
+    // 4D трансформация Арала:
     if (this.lakeLayers['aral_1960']) {
       // В 1960 году показываем полноводное море
       if (this.currentYear <= 1965) {
@@ -500,9 +652,36 @@ class WaterGisMap {
         if (this.lakeLayers['aralkum_desert']) this.lakeLayers['aralkum_desert'].setStyle({ fillOpacity: 0.22 });
       }
     }
+
+    // 4D эволюция уровня Каспийского моря:
+    if (this.lakeLayers['caspian_sea']) {
+      if (this.currentYear <= 1978) {
+        // Исторический минимум конца 1970-х (-29.0 м)
+        this.lakeLayers['caspian_sea'].setStyle({ fillOpacity: 0.50, color: '#0284c7' });
+      } else if (this.currentYear <= 1995) {
+        // Трансгрессия и подъем уровня до -26.6 м
+        this.lakeLayers['caspian_sea'].setStyle({ fillOpacity: 0.72, color: '#00f0ff' });
+      } else if (this.currentYear <= 2026) {
+        // Современное падение уровня (-28.5 м)
+        this.lakeLayers['caspian_sea'].setStyle({ fillOpacity: 0.58, color: '#38bdf8' });
+      } else {
+        // Прогноз 2050 при глобальном потеплении (-29.5 м)
+        this.lakeLayers['caspian_sea'].setStyle({ fillOpacity: 0.40, color: '#0369a1' });
+      }
+    }
   }
 
   focusOnNode(nodeId) {
+    if (nodeId === 'caspian') {
+      this.map.flyTo([42.5, 51.5], 6, { duration: 1.2 });
+      return;
+    }
+    if (nodeId === 'garabogaz') {
+      this.map.flyTo([41.35, 53.58], 8, { duration: 1.2 });
+      if (this.markerLayers['garabogaz']) this.markerLayers['garabogaz'].openPopup();
+      return;
+    }
+
     if (this.markerLayers[nodeId]) {
       const latlng = this.markerLayers[nodeId].getLatLng();
       this.map.flyTo(latlng, 8, { duration: 1.2 });
@@ -511,7 +690,7 @@ class WaterGisMap {
   }
 
   resetView() {
-    this.map.flyTo([42.6, 63.8], 6, { duration: 1.2 });
+    this.map.flyTo([43.0, 59.5], 5.5, { duration: 1.2 });
   }
 }
 

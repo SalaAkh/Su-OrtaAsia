@@ -242,6 +242,7 @@ body::before {
 .gradient-text {
   background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #00f0ff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

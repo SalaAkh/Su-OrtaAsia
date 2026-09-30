@@ -157,6 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gisMap) gisMap.focusOnNode(nodeId);
         visualizer.focusOnNode(nodeId);
       }
+      if (nodeId === 'caspian' && inspectorTitle && inspectorDesc) {
+        inspectorTitle.textContent = "🌊 Каспийское море";
+        inspectorDesc.innerHTML = "<strong>Площадь: 371 000 км² | Уровень: -28.5 м БС</strong><br>Крупнейший бессточный водоем планеты. Притоки: Волга, Жайык (Урал), Кура, Терек.<br>В условиях изменения климата наблюдается критическая регрессия уровня воды (-1.5 м за 15 лет) и обмеление мелководного шельфа Северного Каспия.";
+      } else if (nodeId === 'garabogaz' && inspectorTitle && inspectorDesc) {
+        inspectorTitle.textContent = "🧂 Залив Кара-Богаз-Гол";
+        inspectorDesc.innerHTML = "<strong>Площадь: 18 000 км² | Соленость: до 310 г/л</strong><br>Уникальная природная лагуна-испаритель Каспийского бассейна (Туркменистан). Ежегодно поглощает до 15-20 км³ морской воды, формируя колоссальные залежи мирабилита.";
+      }
     });
   });
 
@@ -781,9 +788,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbodyCities = document.getElementById('rep-cities-tbody');
     if (tbodyCities) {
       tbodyCities.innerHTML = '';
-      const cityNames = ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд'];
+      const cityNames = ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд', 'Актау', 'Атырау', 'Туркменбаши'];
       cityNames.forEach(c => {
         const info = data.города[c];
+        if (!info) return;
         const tr = document.createElement('tr');
         const color = info.статус === 'КРИТИЧЕСКИЙ' ? '#dc2626' : (info.статус === 'ТРЕВОГА' ? '#d97706' : '#16a34a');
         tr.innerHTML = `
@@ -986,11 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
     citiesChart = new Chart(ctxCities, {
       type: 'bar',
       data: {
-        labels: ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд'],
+        labels: ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд', 'Актау', 'Атырау', 'Туркменбаши'],
         datasets: [{
           label: 'Дефицит воды (%)',
-          data: [20, 19, 15, 16, 31],
-          backgroundColor: ['#f43f5e', '#f59e0b', '#0ea5e9', '#10b981', '#a855f7'],
+          data: [20, 19, 15, 16, 31, 12, 14, 18],
+          backgroundColor: ['#f43f5e', '#f59e0b', '#0ea5e9', '#10b981', '#a855f7', '#06b6d4', '#3b82f6', '#ec4899'],
           borderRadius: 4
         }]
       },
@@ -1078,8 +1086,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (quickEff) quickEff.textContent = `Эффективность: ${data.эффективность_процент}%`;
 
     // График городов
-    const cityNames = ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд'];
-    const deficits = cityNames.map(c => parseFloat(data.города[c].дефицит_процент));
+    const cityNames = ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд', 'Актау', 'Атырау', 'Туркменбаши'];
+    const deficits = cityNames.map(c => data.города[c] ? parseFloat(data.города[c].дефицит_процент) : 0);
     citiesChart.data.datasets[0].data = deficits;
     citiesChart.update();
 

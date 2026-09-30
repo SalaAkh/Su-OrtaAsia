@@ -7,7 +7,7 @@
 
 const I18N_DICT = {
   ru: {
-    brand_sub: "Бассейн Аральского моря: Амударья, Сырдарья, Токтогул, Нурек и Канал Кош-Тепа",
+    brand_sub: "Бассейны Центральной Азии: Арал, Каспий, Амударья, Сырдарья, Урал (Жайык) и Кош-Тепа",
     view_map: "3D Спутниковая карта",
     view_dual: "CAD-разрез каналов",
     view_morph: "Трансформация (0-100%)",
@@ -38,7 +38,7 @@ const I18N_DICT = {
     balance_title: "СТРУКТУРА ВОДНОГО БАЛАНСА (КМ³/ГОД)"
   },
   uz: {
-    brand_sub: "Orol dengizi havzasi: Amudaryo, Sirdaryo, To'xtagul, Norak va Qo'shtepa kanali",
+    brand_sub: "Markaziy Osiyo havzalari: Orol, Kaspiy, Amudaryo, Sirdaryo, Jayhun va Qo'shtepa",
     view_map: "3D Sun'iy yo'ldosh xaritasi",
     view_dual: "Kanallarning CAD kesimi",
     view_morph: "Transformatsiya (0-100%)",
@@ -69,7 +69,7 @@ const I18N_DICT = {
     balance_title: "SUV BALANSI STRUKTURASI (KM³/YIL)"
   },
   kz: {
-    brand_sub: "Арал теңізі алабы: Әмудария, Сырдария, Тоқтағұл, Нұрек және Қоштепа каналы",
+    brand_sub: "Орталық Азия су алаптары: Арал, Каспий, Әмудария, Сырдария, Жайық және Қоштепа",
     view_map: "3D Спутниктік карта",
     view_dual: "Каналдардың CAD тілігі",
     view_morph: "Трансформация (0-100%)",
@@ -100,7 +100,7 @@ const I18N_DICT = {
     balance_title: "СУ БАЛАНСЫ ҚҰРЫЛЫМЫ (КМ³/ЖЫЛ)"
   },
   en: {
-    brand_sub: "Aral Sea Basin: Amu Darya, Syr Darya, Toktogul, Nurek and Qosh Tepa Canal",
+    brand_sub: "Central Asia Basins: Aral Sea, Caspian Sea, Amu Darya, Syr Darya, Ural (Zhaiyk) & Qosh Tepa",
     view_map: "3D Satellite Map",
     view_dual: "CAD Canal Cross-Section",
     view_morph: "Transformation (0-100%)",
