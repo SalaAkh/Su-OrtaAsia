@@ -201,6 +201,78 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // УПРАВЛЕНИЕ БОКОВОЙ ПАНЕЛЬЮ (SLIDING SIDEBAR) & ВКЛАДКАМИ
+  // =========================================================================
+  const hudSidebar = document.getElementById('hud-sidebar');
+  const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+  const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+  const btnOpenSidebarFloating = document.getElementById('btn-open-sidebar-floating');
+  const sidebarTabBtns = document.querySelectorAll('.sidebar-tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  function setSidebarOpen(open) {
+    if (!hudSidebar) return;
+    hudSidebar.classList.toggle('collapsed', !open);
+    if (btnToggleSidebar) btnToggleSidebar.classList.toggle('active', open);
+    if (btnOpenSidebarFloating) btnOpenSidebarFloating.style.display = open ? 'none' : 'flex';
+
+    // Инвалидируем размер карты Leaflet и 3D сцены для плавного масштабирования
+    setTimeout(() => {
+      if (gisMap && gisMap.map) gisMap.map.invalidateSize();
+      if (visualizer && visualizer.onWindowResize) visualizer.onWindowResize();
+    }, 320);
+  }
+
+  if (btnToggleSidebar) {
+    btnToggleSidebar.addEventListener('click', () => {
+      const isCollapsed = hudSidebar && hudSidebar.classList.contains('collapsed');
+      setSidebarOpen(isCollapsed);
+    });
+  }
+
+  if (btnCloseSidebar) {
+    btnCloseSidebar.addEventListener('click', () => {
+      setSidebarOpen(false);
+    });
+  }
+
+  if (btnOpenSidebarFloating) {
+    btnOpenSidebarFloating.addEventListener('click', () => {
+      setSidebarOpen(true);
+    });
+  }
+
+  // Переключение вкладок в панели управления
+  sidebarTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sidebarTabBtns.forEach(b => b.classList.remove('active'));
+      tabPanes.forEach(p => p.classList.remove('active'));
+
+      btn.classList.add('active');
+      const targetTabId = btn.dataset.tab;
+      const targetPane = document.getElementById(targetTabId);
+      if (targetPane) targetPane.classList.add('active');
+
+      // Ресайз графиков Chart.js при переходе на вкладку Аналитики
+      if (targetTabId === 'tab-analytics') {
+        setTimeout(() => {
+          if (typeof citiesChart !== 'undefined' && citiesChart) citiesChart.resize();
+          if (typeof balanceChart !== 'undefined' && balanceChart) balanceChart.resize();
+        }, 50);
+      }
+    });
+  });
+
+  // Горячая клавиша для быстрого переключения панели (~ / ` / Alt+B)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '`' || e.key === '~' || (e.altKey && e.key.toLowerCase() === 'b')) {
+      e.preventDefault();
+      const isCollapsed = hudSidebar && hudSidebar.classList.contains('collapsed');
+      setSidebarOpen(isCollapsed);
+    }
+  });
+
   // Переключение языка i18n
   if (langSelect && i18n) {
     langSelect.addEventListener('change', (e) => {
@@ -985,17 +1057,25 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Нижние метрики
-    metricDepletionRisk.textContent = data.риск_текст;
-    if (sim.уровень_модернизации < 0.25) {
-      metricDepletionRisk.className = 'metric-value critical';
-    } else {
-      metricDepletionRisk.className = 'metric-value sustainable';
+    // Нижние метрики и карточка живого статуса
+    if (metricDepletionRisk) {
+      metricDepletionRisk.textContent = data.риск_текст;
+      if (sim.уровень_модернизации < 0.25) {
+        metricDepletionRisk.className = 'metric-value critical';
+      } else {
+        metricDepletionRisk.className = 'metric-value sustainable';
+      }
     }
 
-    metricEfficiency.textContent = `${data.эффективность_процент}%`;
+    if (metricEfficiency) metricEfficiency.textContent = `${data.эффективность_процент}%`;
     if (metricEvapLoss) metricEvapLoss.textContent = `${data.потери_испарение_км3} км³/год`;
     if (metricFiltLoss) metricFiltLoss.textContent = `${data.потери_фильтрация_км3} км³/год`;
+
+    // Синхронизация плавающей плашки статуса на карте
+    const quickRisk = document.getElementById('quick-risk-indicator');
+    const quickEff = document.getElementById('quick-eff-indicator');
+    if (quickRisk) quickRisk.textContent = `Баланс: ${data.риск_текст}`;
+    if (quickEff) quickEff.textContent = `Эффективность: ${data.эффективность_процент}%`;
 
     // График городов
     const cityNames = ['Ташкент', 'Алматы', 'Бишкек', 'Душанбе', 'Самарканд'];
