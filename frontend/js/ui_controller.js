@@ -1262,6 +1262,32 @@ document.addEventListener('DOMContentLoaded', () => {
     syncUI();
   });
 
+  // 7. Инициализация из параметров URL (при переходе из калькулятора лендинга)
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramMod = urlParams.get('mod');
+  const paramSc = urlParams.get('sc');
+
+  if (paramMod !== null) {
+    const val = parseInt(paramMod, 10);
+    if (!isNaN(val) && val >= 0 && val <= 100) {
+      sim.уровень_модернизации = val / 100;
+      if (managementSlider) managementSlider.value = val;
+      if (managementValueBox) managementValueBox.textContent = `${val}%`;
+    }
+  }
+
+  if (paramSc === 'drought') {
+    resetScenarios();
+    sim.засуха = true;
+    if (btnScenarioDrought) btnScenarioDrought.classList.add('active');
+  } else if (paramSc === 'kosh-tepa') {
+    resetScenarios();
+    sim.кош_тепа_отбор_км3 = 15.0;
+    if (koshTepaSlider) koshTepaSlider.value = 15;
+    if (koshTepaValue) koshTepaValue.textContent = "15.0 км³/год";
+    if (btnScenarioKoshTepa) btnScenarioKoshTepa.classList.add('active');
+  }
+
   // Первоначальная синхронизация
   syncUI();
 

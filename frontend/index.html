@@ -3,1108 +3,554 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Су-Орта Азия — Инженерный цифровой двойник водного баланса Центральной Азии</title>
-  <meta name="description" content="Инженерный цифровой двойник бассейнов рек Амударья и Сырдарья. Моделирование фильтрации, солепереноса, канала Кош-Тепа, капельного орошения и студенческая лаборатория решений.">
-  
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f0ff'><path d='M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.5 17.2,18C15.8,16.2 13.9,14.8 12,13.2C10.1,14.8 8.2,16.2 6.8,18C5.1,16.5 4,14.4 4,12A8,8 0 0,1 12,4Z'/></svg>">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Су-Орта Азия — Инженерный цифровой двойник водного бассейна Центральной Азии</title>
+  <meta name="description" content="Платформа моделирования водного баланса рек Амударья и Сырдарья. Спутниковый мониторинг ESRI, 4D реконструкция Арала, расчет влияния канала Кош-Тепа и Парето-оптимизация МКВК.">
 
-  <!-- Внешние библиотеки -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Outfit & Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f0ff'><path d='M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.5 17.2,18C15.8,16.2 13.9,14.8 12,13.2C10.1,14.8 8.2,16.2 6.8,18C5.1,16.5 4,14.4 4,12A8,8 0 0,1 12,4Z'/></svg>">
+  <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
-  <div id="app-container">
 
-    <!-- GIS Viewport & 3D Canvas -->
-    <div id="viewport-container">
-      <div id="gis-map" class="gis-map-viewport"></div>
-      <canvas id="canvas-3d" style="display: none;"></canvas>
-      <div id="scene-callouts-container" style="display: none;"></div>
-
-      <!-- ВСПЛЫВАЮЩАЯ КАРТОЧКА IOT-СЕНСОРА -->
-      <div id="iot-sensor-popup" class="iot-sensor-popup" style="display: none;">
-        <div class="sensor-popup-header">
-          <span class="sensor-dot"></span>
-          <span id="sensor-popup-title" class="sensor-popup-title">Гидропост Керки</span>
-          <button id="btn-close-sensor-popup" class="close-sensor-btn" aria-label="Закрыть">&times;</button>
-        </div>
-        <div class="sensor-popup-grid">
-          <div class="sensor-metric">
-            <span class="s-label">Расход воды (Q):</span>
-            <span id="sensor-val-flow" class="s-val">1420.5 м³/с</span>
-          </div>
-          <div class="sensor-metric">
-            <span class="s-label">Уровень (H):</span>
-            <span id="sensor-val-level" class="s-val">4.82 м</span>
-          </div>
-          <div class="sensor-metric">
-            <span class="s-label">Минерализация:</span>
-            <span id="sensor-val-sal" class="s-val">0.95 г/л</span>
-          </div>
-          <div class="sensor-metric">
-            <span class="s-label">Связь LoRaWAN:</span>
-            <span id="sensor-val-rssi" class="s-val">-84 dBm (96%)</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ПЛАВАЮЩИЙ 4D ТАЙМЛАПС (1960–2050 гг.) -->
-      <div class="timeline-floating-hud">
-        <div class="timeline-header">
-          <div class="timeline-badge-group">
-            <span class="timeline-icon">⏳</span>
-            <span class="timeline-title">4D ВРЕМЕННАЯ РЕКОНСТРУКЦИЯ И ПРОГНОЗ</span>
-          </div>
-          <div class="timeline-year-display">
-            <span id="current-year-display">2026</span>
-            <span class="year-label">год</span>
-          </div>
-        </div>
-
-        <div class="timeline-slider-row">
-          <button id="btn-timeline-play" class="btn-timeline-play" title="Запустить 4D анимацию эволюции Арала">
-            <svg id="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          </button>
-          <div class="timeline-track-wrap">
-            <input type="range" id="timeline-slider" min="1960" max="2050" step="1" value="2026" aria-label="Временная шкала годов (1960-2050)">
-            <div class="timeline-ticks">
-              <span class="tick" data-year="1960">1960<br><small>Полноводный</small></span>
-              <span class="tick" data-year="1985">1985<br><small>Раздел</small></span>
-              <span class="tick" data-year="2005">2005<br><small>Кокарал</small></span>
-              <span class="tick active" data-year="2026">2026<br><small>Текущий</small></span>
-              <span class="tick" data-year="2035">2035<br><small>Пик таяния</small></span>
-              <span class="tick" data-year="2050">2050<br><small>Прогноз</small></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ВЕРХНИЙ ХЕДЕР -->
-    <header class="hud-header">
-      <div class="brand-section">
-        <div class="brand-icon">
+  <!-- ==========================================================================
+       НАВИГАЦИОННАЯ ПАНЕЛЬ (NAVBAR)
+       ========================================================================== -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand-link">
+        <div class="brand-logo-icon">
           <svg viewBox="0 0 24 24">
             <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.5 17.2,18C15.8,16.2 13.9,14.8 12,13.2C10.1,14.8 8.2,16.2 6.8,18C5.1,16.5 4,14.4 4,12A8,8 0 0,1 12,4Z"/>
           </svg>
         </div>
-        <div class="brand-title">
-          <h1>СУ-ОРТА АЗИЯ <span class="brand-badge">ЦИФРОВОЙ ДВОЙНИК БАССЕЙНА</span></h1>
-          <div class="brand-sub">Бассейн Аральского моря: Амударья, Сырдарья, Токтогул, Нурек и Канал Кош-Тепа</div>
+        <div class="brand-name">
+          СУ-ОРТА АЗИЯ
+          <span class="brand-tag">DIGITAL TWIN</span>
         </div>
-      </div>
+      </a>
 
-      <!-- Переключатели режимов картографии и 3D -->
-      <div class="view-modes">
-        <button id="btn-view-sat" class="view-btn active" title="Высокодетализированный спутниковый снимок ESRI">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-            <path d="M2 12h20"/>
-          </svg>
-          <span>🛰️ Спутник HD</span>
-        </button>
-        <button id="btn-view-topo" class="view-btn" title="Топографический рельеф бассейна">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/>
-          </svg>
-          <span>⛰️ Рельеф</span>
-        </button>
-        <button id="btn-view-dark" class="view-btn" title="Тёмная ситуационная карта Palantir">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <span>🌑 Dark Ops</span>
-        </button>
-        <button id="btn-view-dam" class="view-btn" title="3D Инженерный разрез плотины ГЭС">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19L8 5h8l4 14H4z"/>
-            <line x1="12" y1="5" x2="12" y2="19"/>
-          </svg>
-          <span data-i18n="view_dam">3D ГЭС в разрезе</span>
-        </button>
-        <button id="btn-view-dual" class="view-btn" title="CAD разрез каналов">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="8" rx="2"/>
-            <rect x="3" y="13" width="18" height="8" rx="2"/>
-          </svg>
-          <span data-i18n="view_dual">CAD каналов</span>
-        </button>
-      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#crisis">Проблематика</a></li>
+          <li><a href="#features">Возможности</a></li>
+          <li><a href="#calculator">Калькулятор ROI</a></li>
+          <li><a href="#stakeholders">Для кого</a></li>
+          <li><a href="#tech">Технологии</a></li>
+        </ul>
+      </nav>
 
-      <!-- Действия: AI Оптимизатор, Лаборатория, Экспорт -->
-      <div class="header-actions">
-        <button id="btn-open-ai" class="btn-ai-dispatcher">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
-          <span data-i18n="btn_ai">🧠 AI Диспетчер</span>
-        </button>
-
-        <button id="btn-open-lab" class="btn-lab">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg>
-          <span data-i18n="btn_lab">Лаборатория инженера</span>
-        </button>
-
-        <button id="btn-open-missions" class="btn-missions" title="Интерактивные инженерные сценарии и задачи">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="6"/>
-            <circle cx="12" cy="12" r="2"/>
-          </svg>
-          <span data-i18n="btn_missions">🎯 Миссии инженера</span>
-        </button>
-
-        <button id="btn-export-report" class="btn-export" title="Сформировать официальный паспорт водного баланса">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span data-i18n="btn_report">Отчет МКВК</span>
-        </button>
-
-        <!-- Виджет Live погоды Open-Meteo -->
-        <div id="weather-widget" class="weather-widget-badge" title="Погода в реальном времени (Open-Meteo API)">
-          <span class="weather-icon">🌤️</span>
-          <span id="weather-text">Ташкент +24°C | 3.8 м/с</span>
-        </div>
-
-        <!-- Кнопка эмбиентного звука -->
-        <button id="btn-toggle-sound" class="btn-sound-toggle" title="Включить/выключить звук" aria-label="Включить звук">
-          <span id="sound-icon">🔇</span>
-        </button>
-
-        <!-- Переключатель языка -->
-        <div class="lang-selector-wrap">
-          <label for="lang-select" class="sr-only" style="display:none;">Язык</label>
-          <select id="lang-select" class="lang-select" aria-label="Выбор языка">
-            <option value="ru" selected>RU</option>
-            <option value="uz">UZ</option>
-            <option value="kz">KZ</option>
-            <option value="en">EN</option>
-          </select>
-        </div>
-
-        <button id="btn-open-help" class="btn-help">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-        </button>
-        <!-- Кнопка сворачивания/разворачивания боковой панели -->
-        <button id="btn-toggle-sidebar" class="btn-sidebar-toggle active" title="Открыть или скрыть панель управления">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="15" y1="3" x2="15" y2="21"/>
-          </svg>
-          <span>Панель</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- ПЛАВАЮЩИЕ КОНТРОЛЫ НА КАРТЕ (СЛОИ И БЫСТРАЯ НАВИГАЦИЯ) -->
-    <div class="map-floating-bar">
-      <div class="floating-pill-group">
-        <span class="pill-label">Слой:</span>
-        <button class="layer-chip active" data-layer="satellite" title="Спутниковый снимок ESRI">🛰️ Спутник</button>
-        <button class="layer-chip" data-layer="salinity" title="Карта минерализации и засоления почв">🌡️ Засоление</button>
-        <button class="layer-chip" data-layer="moisture" title="Индекс вегетации и влажности">💧 Влажность</button>
-        <button class="layer-chip" data-layer="groundwater" title="Глубина залегания грунтовых вод">🕳️ УГВ</button>
-      </div>
-
-      <div class="pill-divider"></div>
-
-      <div class="floating-pill-group">
-        <span class="pill-label">Фокус:</span>
-        <div class="floating-chips-scroll">
-          <button class="nav-chip active" data-node="all">🗺️ Бассейн</button>
-          <button class="nav-chip" data-node="aral_north">🌊 Сев. Арал</button>
-          <button class="nav-chip" data-node="aral_south">🏜️ Юж. Арал</button>
-          <button class="nav-chip" data-node="kosh_tepa">⚠️ Кош-Тепа</button>
-          <button class="nav-chip" data-node="toktogul">⚡ Токтогул</button>
-          <button class="nav-chip" data-node="nurek">⚡ Нурек</button>
-          <button class="nav-chip" data-node="fergana">🌾 Фергана</button>
-          <button class="nav-chip" data-node="karakum">🚜 Каракум</button>
-        </div>
-      </div>
+      <a href="/app.html" class="nav-cta-btn">
+        <span>Запустить Двойник</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="7" y1="17" x2="17" y2="7"></line>
+          <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+      </a>
     </div>
+  </header>
 
-    <!-- МИНИ-ИНДИКАТОР ЖИВОГО СТАТУСА НА КАРТЕ -->
-    <div class="map-live-status">
-      <span class="status-live-dot"></span>
-      <span id="quick-risk-indicator">Баланс: Безопасный</span>
-      <span class="pill-sep">•</span>
-      <span id="quick-eff-indicator">Эффективность: 70%</span>
-    </div>
-
-    <!-- ЕДИНАЯ БОКОВАЯ СИСТЕМА УПРАВЛЕНИЯ (SLIDING SIDEBAR) -->
-    <aside id="hud-sidebar" class="hud-sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-tabs">
-          <button class="sidebar-tab-btn active" data-tab="tab-scenarios">
-            <span>🎛️ Сценарии</span>
-          </button>
-          <button class="sidebar-tab-btn" data-tab="tab-analytics">
-            <span>📊 Аналитика</span>
-          </button>
-          <button class="sidebar-tab-btn" data-tab="tab-monitoring">
-            <span>📡 IoT Монитор</span>
-          </button>
-        </div>
-        <button id="btn-close-sidebar" class="sidebar-close-btn" title="Свернуть панель (полноэкранная карта)">✕</button>
-      </div>
-
-      <div class="sidebar-content">
-        <!-- ВКЛАДКА 1: СЦЕНАРИИ И МОДЕЛИРОВАНИЕ -->
-        <div id="tab-scenarios" class="tab-pane active">
-          <div class="panel-section-title" data-i18n="scenarios_title">СЦЕНАРИИ СТРЕСС-ТЕСТИРОВАНИЯ</div>
-          <div class="scenario-grid">
-            <button id="sc-normal" class="scenario-btn active">
-              <span class="scenario-title" data-i18n="sc_normal">Базовый баланс</span>
-              <span class="scenario-sub" data-i18n="sc_normal_sub">Многолетний средний сток</span>
-            </button>
-            <button id="sc-low-water" class="scenario-btn">
-              <span class="scenario-title" data-i18n="sc_low_water">Маловодный год</span>
-              <span class="scenario-sub" data-i18n="sc_low_water_sub">-30% стока</span>
-            </button>
-            <button id="sc-drought" class="scenario-btn">
-              <span class="scenario-title" data-i18n="sc_drought">Климатическая засуха</span>
-              <span class="scenario-sub" data-i18n="sc_drought_sub">+4.5°C испарение</span>
-            </button>
-            <button id="sc-kosh-tepa" class="scenario-btn">
-              <span class="scenario-title" data-i18n="sc_kosh_tepa">Кош-Тепа (Макс)</span>
-              <span class="scenario-sub" data-i18n="sc_kosh_tepa_sub">15 км³/год</span>
-            </button>
-            <button id="sc-consortium" class="scenario-btn full-width">
-              <span class="scenario-title" data-i18n="sc_consortium">⚡ Энерго-водный консорциум</span>
-              <span class="scenario-sub" data-i18n="sc_consortium_sub">Зимний энергообмен ⇄ Летний поливной сброс</span>
-            </button>
-          </div>
-
-          <!-- Слайдер Кош-Тепа -->
-          <div class="kosh-slider-card">
-            <div class="kosh-slider-header">
-              <label for="kosh-tepa-slider" data-i18n="kosh_label">Водозабор Кош-Тепа (Афганистан):</label>
-              <span id="kosh-tepa-value" class="kosh-value">0.0 км³/год</span>
-            </div>
-            <input type="range" id="kosh-tepa-slider" min="0" max="15" step="0.5" value="0" aria-label="Водозабор Кош-Тепа (Афганистан)">
-            <div class="kosh-slider-hint">Прямой отбор из Амударьи до входа в Узбекистан и Туркменистан</div>
-          </div>
-
-          <!-- Главный слайдер модернизации -->
-          <div class="sidebar-slider-card">
-            <div class="sidebar-slider-header">
-              <label for="management-slider" class="slider-title" data-i18n="modernization_label">Уровень модернизации бассейна:</label>
-              <span id="management-value-box" class="slider-number-box">0%</span>
-            </div>
-            <input type="range" id="management-slider" min="0" max="100" value="0" aria-label="Уровень модернизации бассейна">
-            <div class="slider-sub-hint">Бетонирование каналов + капельное орошение + умные гидрозатворы</div>
-          </div>
-
-          <!-- Фоновая автосимуляция -->
-          <div class="sidebar-toggle-card">
-            <span class="toggle-card-label" data-i18n="auto_sim">Фоновая автосимуляция IoT:</span>
-            <label class="switch" for="global-update-toggle">
-              <input type="checkbox" id="global-update-toggle" aria-label="Автосимуляция" checked>
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <!-- Резюме кризиса vs модернизации -->
-          <div class="balance-summary-box">
-            <div class="state-card crisis-compact">
-              <div class="card-top-row">
-                <span class="card-title">ФАКТИЧЕСКИЙ КРИЗИС (2026-2029)</span>
-              </div>
-              <ul class="card-points">
-                <li>Потери в земляных каналах: <strong>до 45% стока</strong></li>
-                <li>Арычный самотек: <strong>14 000 м³/га</strong> на хлопчатник</li>
-                <li>Вторичное засоление дельты Арала</li>
-              </ul>
-            </div>
-            <div class="state-card eco-compact">
-              <div class="card-top-row">
-                <span class="card-title">ЦИФРОВАЯ МОДЕРНИЗАЦИЯ</span>
-              </div>
-              <ul class="card-points">
-                <li>Экономия: <strong>до 24.5 км³/год</strong> воды</li>
-                <li>Капельный полив: <strong>4 200 м³/га (-65%)</strong></li>
-                <li>IoT мониторинг 5000+ гидропостов</li>
-              </ul>
-            </div>
-          </div>
+  <!-- ==========================================================================
+       HERO СЕКЦИЯ
+       ========================================================================== -->
+  <main>
+    <section class="hero-section">
+      <div class="container">
+        <div class="hero-badge">
+          <span>🛰️ СПУТНИКОВЫЙ ЦИФРОВОЙ ДВОЙНИК БАССЕЙНА АРАЛЬСКОГО МОРЯ</span>
         </div>
 
-        <!-- ВКЛАДКА 2: АНАЛИТИКА И ВОДНЫЙ БАЛАНС -->
-        <div id="tab-analytics" class="tab-pane">
-          <!-- Сводные KPI метрики -->
-          <div class="kpi-mini-grid">
-            <div class="kpi-card">
-              <span class="kpi-label" data-i18n="risk_label">РИСК ИСТОЩЕНИЯ</span>
-              <span id="metric-depletion-risk" class="kpi-val critical">Критический</span>
-            </div>
-            <div class="kpi-card">
-              <span class="kpi-label" data-i18n="efficiency_label">ЭФФЕКТИВНОСТЬ</span>
-              <span id="metric-efficiency" class="kpi-val sustainable">0%</span>
-            </div>
-            <div class="kpi-card">
-              <span class="kpi-label" data-i18n="evap_label">ИСПАРЕНИЕ</span>
-              <span id="metric-evap-loss" class="kpi-val warn-color">18.5 км³</span>
-            </div>
-            <div class="kpi-card">
-              <span class="kpi-label" data-i18n="filt_label">ФИЛЬТРАЦИЯ</span>
-              <span id="metric-filt-loss" class="kpi-val crit-color">34.2 км³</span>
-            </div>
-          </div>
+        <h1 class="hero-title">
+          Инженерный контроль водного будущего <span class="gradient-text">Центральной Азии</span>
+        </h1>
 
-          <!-- Дефицит воды в агломерациях -->
-          <div class="panel-section-title" data-i18n="cities_title">ДЕФИЦИТ ВОДЫ В АГЛОМЕРАЦИЯХ</div>
-          <div class="chart-container" style="height: 140px;">
-            <canvas id="citiesChart"></canvas>
-          </div>
+        <p class="hero-subtitle">
+          Трансграничное математическое моделирование стока рек Амударья и Сырдарья, оценка влияния канала Кош-Тепа, ликвидация дефицита питьевой воды в 5 агломерациях и спасение Северного Арала.
+        </p>
 
-          <!-- Таблица городов -->
-          <div class="table-wrapper">
-            <table class="hud-table">
-              <thead>
-                <tr>
-                  <th>Город</th>
-                  <th style="text-align: center;">Дефицит</th>
-                  <th style="text-align: center;">Запас</th>
-                  <th style="text-align: right;">Статус</th>
-                </tr>
-              </thead>
-              <tbody id="cities-table-body"></tbody>
-            </table>
-          </div>
-
-          <!-- Структура водного баланса -->
-          <div class="panel-section-title" style="margin-top: 6px;" data-i18n="balance_title">СТРУКТУРА БАЛАНСА (КМ³/ГОД)</div>
-          <div class="chart-container" style="height: 140px;">
-            <canvas id="balanceChart"></canvas>
-          </div>
-        </div>
-
-        <!-- ВКЛАДКА 3: IOT МОНИТОРИНГ И ОБЪЕКТЫ -->
-        <div id="tab-monitoring" class="tab-pane">
-          <!-- Инспектор выбранного гидроузла -->
-          <div id="gis-node-inspector" class="node-inspector">
-            <div class="inspector-header">
-              <span id="inspector-title" class="inspector-title">🌊 Северный Арал (Малый Арал)</span>
-              <span class="inspector-badge">GIS ОБЪЕКТ</span>
-            </div>
-            <p id="inspector-desc" class="inspector-desc">Кокаральская плотина поддерживает уровень 42.0 м БС. Соленость снижена до 11 г/л, промысловое рыболовство восстановлено.</p>
-          </div>
-
-          <!-- Предупреждения IoT -->
-          <div class="panel-section-title">ОПЕРАТИВНЫЕ ПРЕДУПРЕЖДЕНИЯ СЕТИ IOT</div>
-          <div id="alert-feed" class="alert-box"></div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- ПЛАВАЮЩАЯ КНОПКА ОТКРЫТИЯ ПАНЕЛИ (КОГДА ОНА СВЕРНУТА) -->
-    <button id="btn-open-sidebar-floating" class="btn-open-sidebar-floating" style="display: none;" title="Открыть панель управления">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <line x1="15" y1="3" x2="15" y2="21"/>
-      </svg>
-      <span>Панель управления</span>
-    </button>
-
-    <!-- МОДАЛЬНОЕ ОКНО: AI ДИСПЕТЧЕР (ОПТИМИЗАЦИЯ КВОТ И СБРОСОВ) -->
-    <div id="ai-modal" class="lab-modal">
-      <div class="lab-dialog" style="max-width: 760px;">
-        <div class="lab-header">
-          <h2>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        <div class="hero-actions">
+          <a href="/app.html" class="btn-primary-hero">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
-            ИИ-Оптимизатор вододеления: Расчет Парето-оптимального режима
-          </h2>
-          <button id="btn-close-ai" class="close-btn">&times;</button>
+            <span>Запустить Цифровой Двойник</span>
+          </a>
+
+          <a href="#calculator" class="btn-secondary-hero">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+              <line x1="8" y1="6" x2="16" y2="6"></line>
+              <line x1="8" y1="10" x2="16" y2="10"></line>
+              <line x1="8" y1="14" x2="16" y2="14"></line>
+              <line x1="8" y1="18" x2="16" y2="18"></line>
+            </svg>
+            <span>Рассчитать эффект модернизации</span>
+          </a>
         </div>
 
-        <div class="lab-body">
-          <div class="ai-recommendation-card">
-            <div class="ai-status-row">
-              <span class="ai-pill-active">МОДЕЛЬ: МНОГОКРИТЕРИАЛЬНАЯ ГИДРО-ОПТИМИЗАЦИЯ</span>
-              <span class="ai-acc">Сходимость: 99.4%</span>
+        <!-- Ключевые показатели проекта -->
+        <div class="hero-stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">+24.5 км³</div>
+            <div class="stat-label">Годовой потенциал водосбережения бассейна</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">-65%</div>
+            <div class="stat-label">Снижение расхода воды при капельном поливе</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">5 000+</div>
+            <div class="stat-label">IoT-гидропостов онлайн мониторинга стока</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">$3.2 млрд</div>
+            <div class="stat-label">Совокупная ежегодная экономическая выгода</div>
+          </div>
+        </div>
+
+        <!-- Интерактивное превью цифрового двойника -->
+        <div class="hero-preview-wrapper">
+          <div class="hero-preview-inner">
+            <img src="Su OrtaAsia.jpg" alt="Интерфейс цифрового двойника Су-Орта Азия" class="hero-preview-img" onerror="this.src='https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80'">
+            <div class="hero-preview-overlay">
+              <div class="overlay-badge">LIVE СИМУЛЯЦИЯ 2026–2050</div>
+              <h3 class="overlay-title">Высокоточная ГИС-модель с интеграцией спутников ESRI</h3>
+              <p class="overlay-desc">
+                Прямое моделирование каналов Токтогульской и Нурекской ГЭС, плотины Кокарал, водозабора Кош-Тепа и оросительных систем Узбекистана, Казахстана и Туркменистана.
+              </p>
+              <div>
+                <a href="/app.html" class="btn-primary-hero" style="padding: 10px 22px; font-size: 0.9rem;">
+                  Открыть интерактивную карту →
+                </a>
+              </div>
             </div>
-            <p style="margin-top: 8px; font-size: 0.85rem; color: #cbd5e1;">
-              Нейросетевой решатель проанализировал баланс бассейна с учетом водохранилищ Токтогул (Сырдарья) и Нурек (Амударья), тепловых электростанций Казахстана/Узбекистана и дефицита орошения низовий.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         СЕКЦИЯ: ОСТРОТА ПРОБЛЕМЫ (КРИЗИС 2026-2030)
+         ========================================================================== -->
+    <section id="crisis" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">ВЫЗОВЫ ЭПОХИ</span>
+          <h2 class="section-title">Почему традиционное вододеление больше не работает</h2>
+          <p class="section-desc">
+            Климатический сдвиг, истощение ледников Тянь-Шаня и новые масштабные ирригационные стройки требуют перехода от приблизительных расчетов к непрерывному цифровому моделированию.
+          </p>
+        </div>
+
+        <div class="crisis-grid">
+          <div class="crisis-card">
+            <div class="crisis-icon">⚠️</div>
+            <h3 class="crisis-title">Канал Кош-Тепа (Афганистан)</h3>
+            <p class="crisis-text">
+              Строительство 285-километрового канала отбирает до 15 км³/год прямо из Амударьи до входа в Узбекистан и Туркменистан без участия в соглашениях МКВК.
             </p>
-
-            <div class="ai-plan-grid">
-              <div class="ai-plan-item">
-                <span class="plan-num">1</span>
-                <div>
-                  <strong>Сдвиг режима Токтогульской ГЭС:</strong>
-                  <p>Накопление 3.2 км³ зимой → компенсация углем из Экибастуза (Казахстан) → поливной сброс летом в Чардару и Кызылорду.</p>
-                </div>
-              </div>
-              <div class="ai-plan-item">
-                <span class="plan-num">2</span>
-                <div>
-                  <strong>Оптимизация Нурекского каскада:</strong>
-                  <p>Стабилизация попуска 650 м³/с на водозабор Каракумского и Аму-Бухарского каналов без обмеления низовий.</p>
-                </div>
-              </div>
-              <div class="ai-plan-item">
-                <span class="plan-num">3</span>
-                <div>
-                  <strong>Локальное водосбережение (+72% охват):</strong>
-                  <p>Снижение дефицита питьевой воды в Самарканде с 31% до 3.8%, в Бухаре — до 2.5%.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="ai-metrics-preview">
-              <div class="ai-stat-box">
-                <span class="stat-label">Сэкономлено стока</span>
-                <span class="stat-val">+14.8 км³/год</span>
-              </div>
-              <div class="ai-stat-box">
-                <span class="stat-label">Дефицит в городах</span>
-                <span class="stat-val" style="color: #10b981;">Снижен до &lt; 5%</span>
-              </div>
-              <div class="ai-stat-box">
-                <span class="stat-label">Приток в Малый Арал</span>
-                <span class="stat-val" style="color: #00f0ff;">+4.2 км³/год</span>
-              </div>
-            </div>
-
-            <button id="btn-apply-ai-plan" class="btn-apply-plan">
-              🚀 Применить рекомендации ИИ к симуляции
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО: ЛАБОРАТОРИЯ ИНЖЕНЕРА (СТУДЕНЧЕСКИЙ ХАБ) -->
-    <div id="lab-modal" class="lab-modal">
-      <div class="lab-dialog">
-        <div class="lab-header">
-          <h2>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-            </svg>
-            Инженерная лаборатория студента: Программа действий
-          </h2>
-          <button id="btn-close-lab" class="close-btn">&times;</button>
-        </div>
-
-        <div class="lab-tabs">
-          <button class="lab-tab-btn active" data-tab="tab-roi">1. ROI & Экономический калькулятор</button>
-          <button class="lab-tab-btn" data-tab="tab-sandbox">2. Инженерная песочница каналов</button>
-          <button class="lab-tab-btn" data-tab="tab-iot">3. Цифровой учет & Базы данных</button>
-          <button class="lab-tab-btn" data-tab="tab-geo">4. Международный водно-энергетический консорциум</button>
-        </div>
-
-        <div class="lab-body">
-          <!-- Вкладка 1: ROI Калькулятор -->
-          <div id="tab-roi" class="lab-tab-content active">
-            <div class="lab-card">
-              <h3>Калькулятор инвестиций и окупаемости модернизации ирригации</h3>
-              <p>Оцените капитальные затраты (CAPEX) и ежегодный экономический эффект от предотвращения потерь урожая:</p>
-              
-              <div class="roi-form-grid">
-                <div class="roi-input-group">
-                  <label for="roi-canal-km">Протяженность каналов под облицовку (км):</label>
-                  <input type="number" id="roi-canal-km" value="1200" min="100" max="10000" step="100" aria-label="Протяженность каналов под облицовку">
-                </div>
-                <div class="roi-input-group">
-                  <label for="roi-drip-ha">Площадь под капельное орошение (тыс. га):</label>
-                  <input type="number" id="roi-drip-ha" value="450" min="50" max="4000" step="50" aria-label="Площадь под капельное орошение">
-                </div>
-                <div class="roi-input-group">
-                  <label for="roi-crop-type">Тип культуры:</label>
-                  <select id="roi-crop-type" aria-label="Тип культуры">
-                    <option value="cotton">Хлопчатник (экспортный сырец)</option>
-                    <option value="orchard">Интенсивные сады и виноградники</option>
-                    <option value="wheat">Озимая пшеница</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="roi-results-box">
-                <div class="roi-stat">
-                  <span class="roi-label">Капитальные вложения (CAPEX):</span>
-                  <span id="roi-capex" class="roi-val">$1.48 млрд</span>
-                </div>
-                <div class="roi-stat">
-                  <span class="roi-label">Ежегодная экономия воды:</span>
-                  <span id="roi-water-saved" class="roi-val" style="color: #00f0ff;">+9.8 км³/год</span>
-                </div>
-                <div class="roi-stat">
-                  <span class="roi-label">Прирост стоимости урожая:</span>
-                  <span id="roi-crop-profit" class="roi-val" style="color: #10b981;">+$490 млн/год</span>
-                </div>
-                <div class="roi-stat">
-                  <span class="roi-label">Срок окупаемости проекта:</span>
-                  <span id="roi-payback" class="roi-val" style="color: #fbbf24;">3.0 года</span>
-                </div>
-              </div>
-            </div>
+            <div class="crisis-metric-pill">Отбор: до 15.0 км³/год</div>
           </div>
 
-          <!-- Вкладка 2: Песочница каналов -->
-          <div id="tab-sandbox" class="lab-tab-content">
-            <div class="lab-card">
-              <h3>Инженерный расчет фильтрации русла канала</h3>
-              <div class="sandbox-controls-grid">
-                <div>
-                  <label for="sandbox-material" style="font-size: 0.78rem; color: #94a3b8;">Материал русла:</label>
-                  <select id="sandbox-material" aria-label="Материал русла" style="width: 100%; padding: 6px; background: #0b1528; color: #fff; border: 1px solid #1e293b; border-radius: 6px; margin-top: 4px;">
-                    <option value="earth">Земляное песчаное русло (Потери 45%)</option>
-                    <option value="clay">Глиняный экран (Потери 22%)</option>
-                    <option value="concrete">Бетонные плиты (Потери 8%)</option>
-                    <option value="geomembrane" selected>Композитная геомембрана + Бетон (Потери 1.5%)</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="sandbox-q0" style="font-size: 0.78rem; color: #94a3b8;">Расход в голове канала (м³/с):</label>
-                  <input type="number" id="sandbox-q0" value="250" aria-label="Расход в голове канала" style="width: 100%; padding: 6px; background: #0b1528; color: #fff; border: 1px solid #1e293b; border-radius: 6px; margin-top: 4px;">
-                </div>
-              </div>
-
-              <div id="sandbox-result-box" style="margin-top: 14px; padding: 12px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 8px;">
-                <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8;">КПД канала: 98.5% | Доходит до потребителя: 246.25 м³/с (Потери: 3.75 м³/с)</div>
-                <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 4px;">Предотвращен подъем минерализованных грунтовых вод и капиллярное засоление 35 000 га прилегающих земель.</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Вкладка 3: IT & Data -->
-          <div id="tab-iot" class="lab-tab-content">
-            <div class="lab-card">
-              <h3>Архитектура цифрового двойника на PostgreSQL / TimescaleDB</h3>
-              <p>Создание единого межгосударственного хранилища телеметрии реального времени с 5000+ гидропостов:</p>
-              <div class="code-block">
-                <pre><code>-- Логирование транзитного расхода на трансграничном створе (Амударья / Сырдарья)
-INSERT INTO telemetry_hydro_posts (post_id, flow_rate_m3s, water_level_m, salinity_g_l, timestamp)
-VALUES ('POST-AMU-KERKI-01', 1420.5, 4.82, 0.95, NOW());</code></pre>
-              </div>
-            </div>
-          </div>
-
-          <!-- Вкладка 4: Геополитика -->
-          <div id="tab-geo" class="lab-tab-content">
-            <div class="lab-card">
-              <h3>Центрально-Азиатский водно-энергетический консорциум</h3>
-              <p>Синхронизация генерации верховий (Токтогул, Нурек) с поставками энергоносителей (уголь, газ, электричество) из Казахстана и Узбекистана зимой в обмен на летний поливной попуск воды.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО: СИТУАЦИОННЫЙ ТРЕНАЖЕР / ИНЖЕНЕРНЫЕ МИССИИ -->
-    <div id="missions-modal" class="lab-modal">
-      <div class="lab-dialog missions-dialog">
-        <div class="lab-header">
-          <h2>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <circle cx="12" cy="12" r="6"/>
-              <circle cx="12" cy="12" r="2"/>
-            </svg>
-            <span data-i18n="missions_title">Ситуационный тренажер: Инженерные миссии водной безопасности</span>
-          </h2>
-          <button id="btn-close-missions" class="close-btn">&times;</button>
-        </div>
-
-        <!-- Навигатор миссий -->
-        <div class="missions-tab-bar">
-          <button class="mission-tab-btn active" data-mission="m1">
-            <span class="m-badge">Миссия 1</span>
-            <strong>Кризис Кош-Тепа и засуха</strong>
-          </button>
-          <button class="mission-tab-btn" data-mission="m2">
-            <span class="m-badge">Миссия 2</span>
-            <strong>Возрождение Северного Арала</strong>
-          </button>
-          <button class="mission-tab-btn" data-mission="m3">
-            <span class="m-badge">Миссия 3</span>
-            <strong>Локализация скрытой аварии</strong>
-          </button>
-        </div>
-
-        <div class="missions-body">
-          <!-- МИССИЯ 1 -->
-          <div id="mission-view-m1" class="mission-view active">
-            <div class="mission-brief-card">
-              <div class="mission-brief-header">
-                <div>
-                  <span class="brief-tag critical">Чрезвычайная ситуация</span>
-                  <h3 style="margin-top: 6px; font-size: 1.15rem; color: #fff;">Маловодный год + Пиковый водозабор Канала Кош-Тепа</h3>
-                </div>
-                <div class="mission-budget-counter">
-                  <span class="b-lbl">Бюджет миссии:</span>
-                  <span id="m1-budget-display" class="b-val">$450 млн</span>
-                </div>
-              </div>
-              <p class="mission-desc-text">
-                <strong>Вводные условия:</strong> Сток Амударьи упал на 32% (маловодье в верховьях). Канал Кош-Тепа отбирает до 11.5 км³/год без согласования квот МКВК.
-                Каракумский канал и Бухарский оазис теряют до 44% гарантированного расхода, дельта Амударьи полностью пересохла.
-                <strong>Задача инженера:</strong> Распределить антикризисный бюджет $450 млн, ликвидировать дефицит питьевой воды в оазисах до &lt; 5% и восстановить санитарный сток в Арал.
-              </p>
-            </div>
-
-            <!-- Инструменты решения -->
-            <div class="mission-toolbox">
-              <h4>Инженерно-технические рычаги (выберите комплекс мер):</h4>
-              <div class="levers-grid">
-                <label class="lever-item" data-cost="140" data-save="2.8" data-points="35">
-                  <input type="checkbox" id="m1-lever-lining" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Облицовка композитными геомембранами (320 км)</span>
-                      <span class="l-cost">$140 млн</span>
-                    </div>
-                    <div class="l-effect">Каракумский и Аму-Бухарский каналы: устранение потерь на фильтрацию на +2.8 км³/год</div>
-                  </div>
-                </label>
-
-                <label class="lever-item" data-cost="190" data-save="3.4" data-points="40">
-                  <input type="checkbox" id="m1-lever-drip" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Капельное орошение хлопчатника (250 тыс. га)</span>
-                      <span class="l-cost">$190 млн</span>
-                    </div>
-                    <div class="l-effect">Хорезм, Бухара и Лебап: экономия 3.4 км³/год при росте урожайности на 22%</div>
-                  </div>
-                </label>
-
-                <label class="lever-item" data-cost="50" data-save="0.9" data-points="15">
-                  <input type="checkbox" id="m1-lever-iot" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Автоматизированные шлюзы и IoT-гидроучет</span>
-                      <span class="l-cost">$50 млн</span>
-                    </div>
-                    <div class="l-effect">Ликвидация несанкционированных сбросов и точное дозирование на водозаборах (+0.9 км³)</div>
-                  </div>
-                </label>
-
-                <label class="lever-item" data-cost="70" data-save="2.5" data-points="25">
-                  <input type="checkbox" id="m1-lever-pact" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Трансграничный переговорный протокол и мониторинг</span>
-                      <span class="l-cost">$70 млн</span>
-                    </div>
-                    <div class="l-effect">Совместное гидротехническое регулирование: ограничение пика Кош-Тепа до 6.5 км³</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Результаты и скоринг -->
-            <div class="mission-evaluation-panel">
-              <div class="eval-stat-box">
-                <span class="lbl">Израсходовано бюджета:</span>
-                <span id="m1-spent-val" class="val">$0 млн / $450 млн</span>
-                <div class="budget-bar-track">
-                  <div id="m1-budget-bar" class="budget-bar-fill" style="width: 0%;"></div>
-                </div>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Сэкономлено стока:</span>
-                <span id="m1-saved-water" class="val" style="color: #00f0ff;">0.0 км³/год</span>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Дефицит в оазисах:</span>
-                <span id="m1-remaining-deficit" class="val" style="color: #ef4444;">44.0%</span>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Инженерный скоринг:</span>
-                <span id="m1-score" class="val" style="color: #fbbf24;">0 / 100</span>
-                <span id="m1-rank" class="rank-tag unrated">Ожидание решения</span>
-              </div>
-            </div>
-
-            <div class="mission-actions-row">
-              <button id="btn-m1-apply" class="btn-mission-apply">
-                🚀 Применить решение инженера к 3D-двойнику
-              </button>
-              <button id="btn-m1-reset" class="btn-mission-reset">
-                Сбросить параметры
-              </button>
-            </div>
-          </div>
-
-          <!-- МИССИЯ 2 -->
-          <div id="mission-view-m2" class="mission-view">
-            <div class="mission-brief-card">
-              <div class="mission-brief-header">
-                <div>
-                  <span class="brief-tag warning">Экологический вызов</span>
-                  <h3 style="margin-top: 6px; font-size: 1.15rem; color: #fff;">Программа «Кокарал-2»: Возрождение Северного Арала</h3>
-                </div>
-                <div class="mission-budget-counter">
-                  <span class="b-lbl">Бюджет миссии:</span>
-                  <span id="m2-budget-display" class="b-val">$320 млн</span>
-                </div>
-              </div>
-              <p class="mission-desc-text">
-                <strong>Вводные условия:</strong> Приток Сырдарьи в Северный Арал упал ниже 1.2 км³/год из-за фильтрации в земляных руслах и затопления рисовых чеков. Соленость воды достигла 19.5 г/л, уничтожая популяцию промыслового судака.
-                <strong>Задача:</strong> Обеспечить приток &gt; 4.0 км³/год, снизить минерализацию до &lt; 9.5 г/л и стабилизировать отметку 42.5 м БС.
-              </p>
-            </div>
-
-            <div class="mission-toolbox">
-              <h4>Комплекс мер программы «Кокарал-2»:</h4>
-              <div class="levers-grid">
-                <label class="lever-item" data-cost="110" data-save="1.9" data-points="35">
-                  <input type="checkbox" id="m2-lever-rice" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Лазерное планирование рисовых чеков Кызылорды</span>
-                      <span class="l-cost">$110 млн</span>
-                    </div>
-                    <div class="l-effect">Сокращение переливов и фильтрации: высвобождение +1.9 км³/год в низовья Сырдарьи</div>
-                  </div>
-                </label>
-
-                <label class="lever-item" data-cost="130" data-save="1.8" data-points="45">
-                  <input type="checkbox" id="m2-lever-dam" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Модернизация Кокаральской плотины (наращивание +3.5 м)</span>
-                      <span class="l-cost">$130 млн</span>
-                    </div>
-                    <div class="l-effect">Двухуровневый водосброс, увеличение емкости Малого Арала на 3.5 км³</div>
-                  </div>
-                </label>
-
-                <label class="lever-item" data-cost="80" data-save="0.8" data-points="20">
-                  <input type="checkbox" id="m2-lever-delta" class="mission-toggle">
-                  <div class="lever-info">
-                    <div class="lever-title-row">
-                      <span class="l-name">Расчистка русла протоки Караозек и дельтовых озер</span>
-                      <span class="l-cost">$80 млн</span>
-                    </div>
-                    <div class="l-effect">Ликвидация паразитного растекания и испарения в песчаных ловушках (+0.8 км³)</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div class="mission-evaluation-panel">
-              <div class="eval-stat-box">
-                <span class="lbl">Израсходовано бюджета:</span>
-                <span id="m2-spent-val" class="val">$0 млн / $320 млн</span>
-                <div class="budget-bar-track">
-                  <div id="m2-budget-bar" class="budget-bar-fill" style="width: 0%;"></div>
-                </div>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Приток в Малый Арал:</span>
-                <span id="m2-aral-inflow" class="val" style="color: #00f0ff;">1.2 км³/год</span>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Минерализация воды:</span>
-                <span id="m2-salinity" class="val" style="color: #ef4444;">19.5 г/л</span>
-              </div>
-
-              <div class="eval-stat-box">
-                <span class="lbl">Оценка решения:</span>
-                <span id="m2-score" class="val" style="color: #fbbf24;">0 / 100</span>
-                <span id="m2-rank" class="rank-tag unrated">Ожидание решения</span>
-              </div>
-            </div>
-
-            <div class="mission-actions-row">
-              <button id="btn-m2-apply" class="btn-mission-apply">
-                🚀 Применить параметры «Кокарал-2» к 3D-двойнику
-              </button>
-              <button id="btn-m2-reset" class="btn-mission-reset">
-                Сбросить параметры
-              </button>
-            </div>
-          </div>
-
-          <!-- МИССИЯ 3 -->
-          <div id="mission-view-m3" class="mission-view">
-            <div class="mission-brief-card">
-              <div class="mission-brief-header">
-                <div>
-                  <span class="brief-tag critical">Аварийный протокол IoT</span>
-                  <h3 style="margin-top: 6px; font-size: 1.15rem; color: #fff;">Ликвидация скрытой промоины Каракумского дюкера</h3>
-                </div>
-                <div class="mission-budget-counter">
-                  <span class="b-lbl">Потери потока:</span>
-                  <span id="m3-leak-flow" class="b-val" style="color: #ef4444;">-24.5 м³/с</span>
-                </div>
-              </div>
-              <p class="mission-desc-text">
-                <strong>Тревога телеметрии:</strong> Акустический датчик <code>TKM-KRK-LEAK-21</code> (180-й км, пески Заунгузья) регистрирует резкий провал давления до 0.4 бар при шуме 84 дБ. Обнаружена внутренняя суффозионная промоина земляной дамбы с риском полного размыва железнодорожного полотна и затопления солончака!
-              </p>
-            </div>
-
-            <div class="leak-action-steps">
-              <div class="step-card" id="step-leak-1">
-                <div class="s-num">1</div>
-                <div class="s-content">
-                  <strong>Перекрытие аварийных затворов створа ПК-178</strong>
-                  <p>Снижение напорного давления и отсечение аварийного 8-километрового бьефа.</p>
-                  <button id="btn-leak-step1" class="btn-step-action">Выполнить сброс затворов</button>
-                </div>
-              </div>
-
-              <div class="step-card disabled" id="step-leak-2">
-                <div class="s-num">2</div>
-                <div class="s-content">
-                  <strong>Ввод в действие байпасной нити дюкера</strong>
-                  <p>Перенаправление транзитного расхода 170 м³/с в резервный трубопровод в обход промоины.</p>
-                  <button id="btn-leak-step2" class="btn-step-action" disabled>Активировать байпас</button>
-                </div>
-              </div>
-
-              <div class="step-card disabled" id="step-leak-3">
-                <div class="s-num">3</div>
-                <div class="s-content">
-                  <strong>Геосинтетическая инъекционная тампонада</strong>
-                  <p>Подача полимерного гидрогеля под давлением 12 бар в тело дамбы для глушения каверны.</p>
-                  <button id="btn-leak-step3" class="btn-step-action" disabled>Выполнить инъекцию</button>
-                </div>
-              </div>
-            </div>
-
-            <div id="m3-result-banner" class="m3-result-banner" style="display: none;">
-              <div style="font-size: 1.1rem; font-weight: 700; color: #10b981;">✅ АВАРИЯ УСПЕШНО ЛИКВИДИРОВАНА!</div>
-              <p style="margin-top: 6px; font-size: 0.88rem; color: #cbd5e1;">Целостность Каракумской магистрали восстановлена. Спасен объем 185 000 м³ чистой воды, предотвращен размыв транспортной инфраструктуры.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО: ОФИЦИАЛЬНЫЙ АНАЛИТИЧЕСКИЙ ОТЧЕТ / ПАСПОРТ МКВК -->
-    <div id="report-modal" class="lab-modal">
-      <div class="lab-dialog report-dialog">
-        <!-- Тулбар действий -->
-        <div class="report-toolbar no-print">
-          <div class="report-toolbar-left">
-            <span class="report-badge">ОФИЦИАЛЬНЫЙ ДОКУМЕНТ</span>
-            <span id="report-timestamp-top" class="report-meta">Дата формирования: 30.09.2026</span>
-          </div>
-          <div class="report-toolbar-actions">
-            <button id="btn-print-report-action" class="btn-doc-action primary">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 6 2 18 2 18 9"/>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                <rect x="6" y="14" width="12" height="8"/>
-              </svg>
-              Распечатать / Сохранить в PDF
-            </button>
-            <button id="btn-export-json" class="btn-doc-action">
-              📥 Экспорт JSON
-            </button>
-            <button id="btn-export-csv" class="btn-doc-action">
-              📊 Экспорт CSV
-            </button>
-            <button id="btn-close-report" class="close-btn" style="position: static; margin-left: 8px;">&times;</button>
-          </div>
-        </div>
-
-        <!-- ПЕЧАТНЫЙ БЛАНК ДОКУМЕНТА (A4 SHEET) -->
-        <div id="printable-report-sheet" class="printable-sheet">
-          <!-- Шапка документа -->
-          <div class="sheet-header">
-            <div class="sheet-emblem">
-              <svg viewBox="0 0 24 24" width="46" height="46" fill="#0284c7">
-                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.5 17.2,18C15.8,16.2 13.9,14.8 12,13.2C10.1,14.8 8.2,16.2 6.8,18C5.1,16.5 4,14.4 4,12A8,8 0 0,1 12,4Z"/>
-              </svg>
-            </div>
-            <div class="sheet-title-block">
-              <div class="sheet-org">МЕЖГОСУДАРСТВЕННАЯ КООРДИНАЦИОННАЯ ВОДОХОЗЯЙСТВЕННАЯ КОМИССИЯ ЦЕНТРАЛЬНОЙ АЗИИ (МКВК)</div>
-              <div class="sheet-suborg">МЕЖДУНАРОДНЫЙ ФОНД СПАСЕНИЯ АРАЛА (МФСА) • ЦИФРОВОЙ ДВОЙНИК «СУ-ОРТА АЗИЯ»</div>
-              <h1>АНАЛИТИЧЕСКИЙ ПАСПОРТ ВОДНОГО БАЛАНСА И ИНВЕСТИЦИОННЫЙ АУДИТ</h1>
-              <div class="sheet-doc-meta">
-                <span>Рег. номер: <strong id="rep-reg-num">ICWC-ASB-2026-9281</strong></span>
-                <span>Статус: <strong>Оперативный расчет цифрового двойника</strong></span>
-                <span>Дата: <strong id="rep-date-str">30.09.2026</strong></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="sheet-divider"></div>
-
-          <!-- Секция 1: Резюме гидрологического баланса -->
-          <div class="sheet-section">
-            <h2 class="sec-title">1. ОБЩИЙ ВОДНЫЙ БАЛАНС РЕЧНЫХ БАССЕЙНОВ</h2>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Параметр водной системы</th>
-                  <th>Базовый многолетний сток</th>
-                  <th>Текущий расчетный сток</th>
-                  <th>Отклонение / Потери</th>
-                  <th>Статус безопасности</th>
-                </tr>
-              </thead>
-              <tbody id="rep-balance-tbody">
-                <!-- Заполняется динамически -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Секция 2: Трансграничные квоты и канал Кош-Тепа -->
-          <div class="sheet-section">
-            <h2 class="sec-title">2. ТРАНСГРАНИЧНОЕ РАСПРЕДЕЛЕНИЕ И КАНАЛ КОШ-ТЕПА (АФГАНИСТАН)</h2>
-            <div class="rep-grid-2col">
-              <table class="report-table">
-                <thead>
-                  <tr>
-                    <th>Государство бассейна</th>
-                    <th>Квота МКВК (%)</th>
-                    <th>Фактический приток (км³/год)</th>
-                    <th>Дефицит квоты</th>
-                  </tr>
-                </thead>
-                <tbody id="rep-quotas-tbody">
-                  <!-- Заполняется динамически -->
-                </tbody>
-              </table>
-
-              <div class="rep-text-card">
-                <h3>Оценка влияния канала Кош-Тепа:</h3>
-                <p id="rep-kosh-evaluation">Канал Кош-Тепа отбирает воду в объеме 0.0 км³/год. Дефицит в среднем течении Амударьи компенсирован.</p>
-                <div class="rep-mini-stat">
-                  <span>Эффективность сети бассейна:</span>
-                  <strong id="rep-grid-eff">62.5%</strong>
-                </div>
-                <div class="rep-mini-stat">
-                  <span>Приток в Южный Арал:</span>
-                  <strong id="rep-aral-south">2.4 км³/год</strong>
-                </div>
-                <div class="rep-mini-stat">
-                  <span>Приток в Северный (Малый) Арал:</span>
-                  <strong id="rep-aral-north">3.1 км³/год</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Секция 3: Водообеспечение агломераций -->
-          <div class="sheet-section">
-            <h2 class="sec-title">3. СТАТУС ПИТЬЕВОГО ВОДОСНАБЖЕНИЯ КРУПНЕЙШИХ АГЛОМЕРАЦИЙ</h2>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Город / Агломерация</th>
-                  <th>Население</th>
-                  <th>Основной водоисточник</th>
-                  <th>Дефицит подачи (%)</th>
-                  <th>Резервная автономность</th>
-                  <th>Категория риска</th>
-                </tr>
-              </thead>
-              <tbody id="rep-cities-tbody">
-                <!-- Заполняется динамически -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Секция 4: Инвестиционно-экономический аудит -->
-          <div class="sheet-section">
-            <h2 class="sec-title">4. ИНВЕСТИЦИОННЫЙ АУДИТ ИНФРАСТРУКТУРНОЙ МОДЕРНИЗАЦИИ</h2>
-            <div class="rep-investment-row">
-              <div class="rep-inv-metric">
-                <span class="m-title">Оценка CAPEX модернизации:</span>
-                <span id="rep-capex-val" class="m-val">$1.48 млрд</span>
-              </div>
-              <div class="rep-inv-metric">
-                <span class="m-title">Сбережение стока:</span>
-                <span id="rep-saved-val" class="m-val" style="color: #0284c7;">+9.8 км³/год</span>
-              </div>
-              <div class="rep-inv-metric">
-                <span class="m-title">Предотвращенный ущерб АПК:</span>
-                <span id="rep-profit-val" class="m-val" style="color: #16a34a;">+$490 млн/год</span>
-              </div>
-              <div class="rep-inv-metric">
-                <span class="m-title">Срок окупаемости программы:</span>
-                <span id="rep-payback-val" class="m-val" style="color: #d97706;">3.0 года</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Секция 5: Резолюция и подписи -->
-          <div class="sheet-section">
-            <h2 class="sec-title">5. ЭКСПЕРТНОЕ ЗАКЛЮЧЕНИЕ И РЕЗОЛЮЦИЯ AI ДИСПЕТЧЕРА</h2>
-            <p id="rep-resolution-text" class="rep-resolution">
-              На основе многофакторного анализа цифрового двойника рекомендуется переход к согласованному поливному попуску Токтогульского каскада с компенсацией топливно-энергетическими поставками в зимний период. Форсирование модернизации ирригации предотвращает трансграничный дефицит.
+          <div class="crisis-card">
+            <div class="crisis-icon">🏜️</div>
+            <h3 class="crisis-title">Потери в земляных руслах</h3>
+            <p class="crisis-text">
+              До 45% стока магистральных каналов фильтруется в пески Кызылкума и Каракумов из-за отсутствия бетонной облицовки и геомембран советской инфраструктуры.
             </p>
-            <div class="rep-signatures">
-              <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-name">Научно-информационный центр МКВК</div>
-                <div class="sig-sub">Секретариат бассейновых управлений</div>
+            <div class="crisis-metric-pill">Потери стока: до 45%</div>
+          </div>
+
+          <div class="crisis-card warning">
+            <div class="crisis-icon">🌾</div>
+            <h3 class="crisis-title">Арычный самотек и хлопчатник</h3>
+            <p class="crisis-text">
+              Устаревшие нормы полива 14 000 м³/га вызывают подъем минерализованных грунтовых вод, смыв солей в реки и деградацию плодородных земель низовий.
+            </p>
+            <div class="crisis-metric-pill" style="color: #fbbf24; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3);">
+              Расход: 14 000 м³/га
+            </div>
+          </div>
+
+          <div class="crisis-card warning">
+            <div class="crisis-icon">🏔️</div>
+            <h3 class="crisis-title">Таяние ледников Тянь-Шаня</h3>
+            <p class="crisis-text">
+              По оценкам гляциологов, пик ледникового стока придется на 2035 год, после чего начнется необратимое падение естественного речного питания на 25–35%.
+            </p>
+            <div class="crisis-metric-pill" style="color: #fbbf24; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3);">
+              Пик стока: ~2035 год
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         СЕКЦИЯ: КЛЮЧЕВЫЕ ВОЗМОЖНОСТИ ПЛАТФОРМЫ
+         ========================================================================== -->
+    <section id="features" class="section" style="background: rgba(10, 16, 32, 0.4);">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">ФУНКЦИОНАЛЬНЫЙ АРСЕНАЛ</span>
+          <h2 class="section-title">Единая экосистема для принятия гидрологических решений</h2>
+          <p class="section-desc">
+            Платформа сочетает математический аппарат уравнений мелкой воды Сен-Венана, спутниковое дистанционное зондирование и алгоритмы многокритериальной оптимизации.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <!-- 1. Спутниковый ГИС -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">🛰️</div>
+              <h3 class="feature-title">Спутниковый ГИС сверхвысокого разрешения</h3>
+            </div>
+            <p class="feature-desc">
+              Интеграция мозаики ESRI World Imagery и Sentinel с отрисовкой реальных гидрологических русел, магистральных каналов и водохранилищ Центральной Азии.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">ESRI HD</span>
+              <span class="feature-tag">Leaflet GIS</span>
+              <span class="feature-tag">Векторные русла</span>
+            </div>
+          </div>
+
+          <!-- 2. 4D Временной прогноз -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">⏳</div>
+              <h3 class="feature-title">4D Эволюция Арала (1960–2050 гг.)</h3>
+            </div>
+            <p class="feature-desc">
+              Интерактивная шкала реконструкции усыхания Аральского моря, эффекта разделения на Большой и Малый Арал, строительства Кокаральской плотины и климатического прогноза.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">1960 Полноводный</span>
+              <span class="feature-tag">Кокарал 42.0м</span>
+              <span class="feature-tag">Прогноз 2050</span>
+            </div>
+          </div>
+
+          <!-- 3. AI-Диспетчер Парето -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">🧠</div>
+              <h3 class="feature-title">AI-Диспетчер Парето-вододеления</h3>
+            </div>
+            <p class="feature-desc">
+              Оптимизационный решатель режима Токтогульского и Нурекского каскадов: расчет компенсации зимней электроэнергии углем и газом в обмен на летние ирригационные попуски.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">Консорциум ГЭС</span>
+              <span class="feature-tag">Парето-фронт</span>
+              <span class="feature-tag">Минводхоз</span>
+            </div>
+          </div>
+
+          <!-- 4. IoT Мониторинг -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">📡</div>
+              <h3 class="feature-title">Сеть из 5000+ IoT-гидропостов LoRaWAN</h3>
+            </div>
+            <p class="feature-desc">
+              Сквозная телеметрия расходов воды ($Q$), уровней ($H$) и минерализации в реальном времени. Автоматическое выявление несанкционированного водозабора и аварийных прорывов.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">LoRaWAN</span>
+              <span class="feature-tag">Ультразвук Q/H</span>
+              <span class="feature-tag">Мгновенный Alert</span>
+            </div>
+          </div>
+
+          <!-- 5. Инженерные миссии -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">🎯</div>
+              <h3 class="feature-title">Симулятор кризисных инженерных ситуаций</h3>
+            </div>
+            <p class="feature-desc">
+              Специализированные учебные и практические кейсы: прорыв дамбы Чардары, экстремальная засуха, пуск второй очереди Кош-Тепа и координация аварийных сбросов.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">Тренажер МКВК</span>
+              <span class="feature-tag">Стресс-тесты</span>
+              <span class="feature-tag">Оценка решений</span>
+            </div>
+          </div>
+
+          <!-- 6. Официальные отчеты МКВК -->
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">📑</div>
+              <h3 class="feature-title">Генератор паспортов водного баланса МКВК</h3>
+            </div>
+            <p class="feature-desc">
+              Формирование официальных сводных отчетов по форме Межгосударственной координационной водохозяйственной комиссии с расчетом дней запаса городов и экспортом в PDF/JSON.
+            </p>
+            <div class="feature-tags">
+              <span class="feature-tag">Печатный PDF</span>
+              <span class="feature-tag">JSON / CSV</span>
+              <span class="feature-tag">Стандарт МКВК</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         СЕКЦИЯ: ИНТЕРАКТИВНЫЙ КАЛЬКУЛЯТОР МОДЕРНИЗАЦИИ (LIVE ROI)
+         ========================================================================== -->
+    <section id="calculator" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">ИНТЕРАКТИВНЫЙ КАЛЬКУЛЯТОР</span>
+          <h2 class="section-title">Оцените эффект модернизации бассейна онлайн</h2>
+          <p class="section-desc">
+            Двигайте регулятор уровня технологий (бетонирование каналов, капельный полив, умные затворы), чтобы увидеть реакцию водного баланса 5 государств.
+          </p>
+        </div>
+
+        <div class="calc-wrapper">
+          <div class="calc-layout">
+            <!-- Левая колонка: Управление параметрами -->
+            <div class="calc-controls">
+              <div class="calc-slider-box">
+                <div class="calc-slider-header">
+                  <span class="calc-slider-title">Уровень модернизации бассейна:</span>
+                  <span id="calc-slider-val" class="calc-slider-val">70%</span>
+                </div>
+                <input type="range" id="calc-slider" min="0" max="100" value="70" aria-label="Уровень модернизации">
+                <p style="font-size: 0.78rem; color: #94a3b8; margin-top: 8px;">
+                  Бетонирование русел каналов + перевод 60% полей на капельное орошение + автоматизация шлюзов
+                </p>
               </div>
-              <div class="sig-stamp">
-                <div class="stamp-circle">
-                  <span>МКВК ЦА</span>
-                  <small>ОДОБРЕНО</small>
-                  <span>2026</span>
+
+              <div class="calc-scenarios-box">
+                <span class="calc-scenarios-label">Сценарий гидрологической нагрузки:</span>
+                <div class="calc-scenario-chips">
+                  <button class="calc-chip active" data-scenario="normal">Базовый многолетний сток</button>
+                  <button class="calc-chip" data-scenario="drought">Климатическая засуха (+4.5°C)</button>
+                  <button class="calc-chip" data-scenario="kosh-tepa">Канал Кош-Тепа (Максимум)</button>
                 </div>
               </div>
-              <div class="sig-block" style="text-align: right;">
-                <div class="sig-line" style="margin-left: auto;"></div>
-                <div class="sig-name">Цифровой двойник «Су-Орта Азия»</div>
-                <div class="sig-sub">Автоматизированная валидация моделей</div>
+            </div>
+
+            <!-- Правая колонка: Динамические результаты -->
+            <div class="calc-results-panel">
+              <div class="calc-result-card highlight">
+                <span class="res-label">Сэкономленный объем стока</span>
+                <span id="res-savings" class="res-val cyan">+17.2 км³</span>
+                <span class="res-sub">Возвращается в русла рек ежегодно</span>
+              </div>
+
+              <div class="calc-result-card">
+                <span class="res-label">Эффективность сети</span>
+                <span id="res-efficiency" class="res-val green">81%</span>
+                <span class="res-sub">Рост с базовых 35%</span>
+              </div>
+
+              <div class="calc-result-card">
+                <span class="res-label">Средний дефицит городов</span>
+                <span id="res-deficit" class="res-val green">2.8%</span>
+                <span class="res-sub">Ташкент, Бишкек, Самарканд</span>
+              </div>
+
+              <div class="calc-result-card">
+                <span class="res-label">Приток в Северный Арал</span>
+                <span id="res-aral" class="res-val cyan">8.1 км³/год</span>
+                <span class="res-sub">Стабилизация Кокарала 42.0м</span>
+              </div>
+
+              <div class="calc-result-card" style="grid-column: span 2;">
+                <span class="res-label">Совокупный экономический эффект (ROI)</span>
+                <span id="res-roi" class="res-val green">$2.2 млрд/год</span>
+                <span class="res-sub">Экономия энергии, рост урожайности хлопка/пшеницы и сохранение экосистем</span>
+              </div>
+
+              <div class="calc-action-bar">
+                <span style="font-size: 0.85rem; color: #cbd5e1;">Хотите протестировать эти параметры на 3D карте?</span>
+                <a id="btn-launch-with-params" href="/app.html?mod=70" class="btn-calc-cta">
+                  <span>Применить в ГИС Двойнике →</span>
+                </a>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- МОДАЛЬНОЕ ОКНО: СПРАВКА -->
-    <div id="help-modal" class="lab-modal">
-      <div class="lab-dialog" style="max-width: 600px;">
-        <div class="lab-header">
-          <h2>Справка цифрового двойника «Су-Орта Азия»</h2>
-          <button id="btn-close-help" class="close-btn">&times;</button>
+    <!-- ==========================================================================
+         СЕКЦИЯ: ДЛЯ КОГО И ПАРТНЕРЫ
+         ========================================================================== -->
+    <section id="stakeholders" class="section" style="background: rgba(10, 16, 32, 0.3);">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">ЭКОСИСТЕМА И ПОЛЬЗОВАТЕЛИ</span>
+          <h2 class="section-title">Разработано для ключевых лиц водного сектора</h2>
+          <p class="section-desc">
+            Система устраняет разногласия между странами верхнего и нижнего течения благодаря прозрачным математическим данным.
+          </p>
         </div>
-        <div class="lab-body" style="padding: 20px; font-size: 0.9rem; line-height: 1.6; color: #cbd5e1;">
-          <p><strong>Интерактивные возможности:</strong></p>
-          <ul style="margin: 10px 0 15px 20px;">
-            <li><strong>Слои карты:</strong> Переключайте спутниковый рельеф, карту засоления почв, влажность (NDVI) и грунтовые воды (УГВ).</li>
-            <li><strong>4D Таймлапс:</strong> Перемещайте ползунок годов 1960–2050 или запустите кнопку воспроизведения.</li>
-            <li><strong>AI Диспетчер:</strong> Нажмите «🧠 AI Диспетчер» для мгновенного расчета Парето-оптимального баланса между ГЭС и поливом.</li>
-            <li><strong>Навигация в 3D:</strong> Вращение левой кнопкой мыши, колесо для зума, клик по маякам для перелета.</li>
-          </ul>
+
+        <div class="stakeholders-grid">
+          <div class="stakeholder-card">
+            <div class="stakeholder-icon">🏛️</div>
+            <h3 class="stakeholder-title">МКВК и БВО бассейнов</h3>
+            <p class="stakeholder-desc">
+              Единый источник верифицированных данных для ежегодного согласования графиков вододеления и распределения лимитов между странами.
+            </p>
+          </div>
+
+          <div class="stakeholder-card">
+            <div class="stakeholder-icon">⚡</div>
+            <h3 class="stakeholder-title">Минэнерго и Минводхозы</h3>
+            <p class="stakeholder-desc">
+              Математическое планирование выработки Токтогульской и Нурекской ГЭС зимой с компенсацией перетоками тепла и газа из Казахстана и Узбекистана.
+            </p>
+          </div>
+
+          <div class="stakeholder-card">
+            <div class="stakeholder-icon">🚜</div>
+            <h3 class="stakeholder-title">Ирригационные ассоциации</h3>
+            <p class="stakeholder-desc">
+              Прогнозирование дефицита поливной воды за 60–90 дней до начала вегетационного периода и планирование севооборота.
+            </p>
+          </div>
+
+          <div class="stakeholder-card">
+            <div class="stakeholder-icon">🎓</div>
+            <h3 class="stakeholder-title">НИИ и Университеты</h3>
+            <p class="stakeholder-desc">
+              Виртуальная гидрологическая лаборатория для подготовки нового поколения инженеров-водников и моделирования научных гипотез.
+            </p>
+          </div>
+        </div>
+
+        <!-- Логотипы институтов и стандартов -->
+        <div class="partners-banner">
+          <div class="partners-label">СООТВЕТСТВИЕ СТАНДАРТАМ И НАУЧНЫЕ ИСТОЧНИКИ ДАННЫХ</div>
+          <div class="partners-logos-row">
+            <div class="partner-badge">🌊 МКВК Центральной Азии</div>
+            <div class="partner-badge">🛰️ ESRI World Imagery</div>
+            <div class="partner-badge">🌐 НИЦ МКВК Ташкент</div>
+            <div class="partner-badge">🌤️ Open-Meteo API</div>
+            <div class="partner-badge">💧 IFAS (МФСА)</div>
+            <div class="partner-badge">🌍 Sentinel-2 Copernicus</div>
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- ==========================================================================
+         СЕКЦИЯ: ТЕХНОЛОГИЧЕСКИЙ СТЕК
+         ========================================================================== -->
+    <section id="tech" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">НАУЧНО-ТЕХНИЧЕСКАЯ БАЗА</span>
+          <h2 class="section-title">Современный технологический стек</h2>
+          <p class="section-desc">
+            Без компромиссов: чистая производительность, открытые стандарты и отказоустойчивость.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">📐</div>
+              <h3 class="feature-title">Уравнения Сен-Венана и Дарси</h3>
+            </div>
+            <p class="feature-desc">
+              Физико-математический расчет неустановившегося движения открытых потоков, инфильтрации в грунт и конвективно-диффузионного переноса солей.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">⚡</div>
+              <h3 class="feature-title">Python Async + WebSocket Live Hub</h3>
+            </div>
+            <p class="feature-desc">
+              Сверхбыстрый бэкенд с трансляцией телеметрии с частотой до 60 Гц, базой данных SQLite time-series и реактивной синхронизацией клиентов.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-header">
+              <div class="feature-icon-box">🌐</div>
+              <h3 class="feature-title">Leaflet GIS & 3D WebGL Three.js</h3>
+            </div>
+            <p class="feature-desc">
+              Двухрежимное отображение: высокоточная интерактивная спутниковая карта и 3D CAD инженерные разрезы плотин и земляных каналов.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         ФИНАЛЬНЫЙ CTA БАННЕР
+         ========================================================================== -->
+    <section class="final-cta-section">
+      <div class="container">
+        <div class="final-cta-card">
+          <h2 class="final-cta-title">
+            Готовы протестировать моделирование водного бассейна?
+          </h2>
+          <p class="final-cta-desc">
+            Перейдите в полноэкранный ГИС-симулятор «Су-Орта Азия» прямо сейчас. Без регистрации и установки стороннего ПО.
+          </p>
+          <a href="/app.html" class="btn-primary-hero" style="font-size: 1.15rem; padding: 16px 40px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Запустить Цифровой Двойник</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       ПОДВАЛ (FOOTER)
+       ========================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <a href="/" class="brand-link">
+          <div class="brand-logo-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 18.9,16.5 17.2,18C15.8,16.2 13.9,14.8 12,13.2C10.1,14.8 8.2,16.2 6.8,18C5.1,16.5 4,14.4 4,12A8,8 0 0,1 12,4Z"/>
+            </svg>
+          </div>
+          <div class="brand-name">
+            СУ-ОРТА АЗИЯ
+          </div>
+        </a>
+
+        <ul class="footer-links">
+          <li><a href="/app.html">ГИС Симулятор</a></li>
+          <li><a href="#crisis">Проблематика</a></li>
+          <li><a href="#features">Возможности</a></li>
+          <li><a href="#calculator">Калькулятор</a></li>
+          <li><a href="#stakeholders">МКВК</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 Проект «Су-Орта Азия». Все права защищены. Разработано для водной безопасности Центральной Азии.</div>
+        <div>Версия платформы: v2.4 Release (ESRI High-Res GIS + Pareto AI Dispatcher)</div>
+      </div>
     </div>
+  </footer>
 
-  </div>
-
-  <script src="js/audio_synth.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/hydrology_sim.js"></script>
-  <script src="js/scene_3d.js"></script>
-  <script src="js/river_geometries.js"></script>
-  <script src="js/gis_map.js"></script>
-  <script src="js/ui_controller.js"></script>
+  <!-- Скрипты -->
+  <script src="js/landing.js"></script>
 </body>
 </html>
