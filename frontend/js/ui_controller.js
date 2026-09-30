@@ -5,9 +5,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Инициализация 3D сцены, физического движка, звука и локализации
+  // 1. Инициализация GIS карты, 3D сцены, физического движка, звука и локализации
   const sim = new HydrologySimulationClient();
   const visualizer = new WaterSimulation3D('canvas-3d', 'scene-callouts-container');
+  const gisMap = typeof WaterGisMap !== 'undefined' ? new WaterGisMap('gis-map') : null;
+  window.gisMap = gisMap;
 
   // Web Audio API синтезатор и менеджер локализации i18n
   const audioSynth = typeof WaterAudioSynthesizer !== 'undefined' ? new WaterAudioSynthesizer() : null;
@@ -23,11 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const koshTepaSlider = document.getElementById('kosh-tepa-slider');
   const koshTepaValue = document.getElementById('kosh-tepa-value');
 
-  // Кнопки переключения 3D режимов
-  const btnViewMap = document.getElementById('btn-view-map');
-  const btnViewDual = document.getElementById('btn-view-dual');
-  const btnViewMorph = document.getElementById('btn-view-morph');
+  // Кнопки переключения картографии и 3D режимов
+  const btnViewSat = document.getElementById('btn-view-sat');
+  const btnViewTopo = document.getElementById('btn-view-topo');
+  const btnViewDark = document.getElementById('btn-view-dark');
   const btnViewDam = document.getElementById('btn-view-dam');
+  const btnViewDual = document.getElementById('btn-view-dual');
 
   // Кнопки сценариев
   const btnScenarioNormal = document.getElementById('sc-normal');
@@ -88,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     visualizer.установить_год(year);
+    if (gisMap) gisMap.установить_год(year);
   }
 
   if (timelineSlider) {
@@ -129,6 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
       layerChips.forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       const layer = chip.dataset.layer;
+      if (gisMap) {
+        if (layer === 'satellite') gisMap.setBaseLayer('satellite');
+        else if (layer === 'salinity') gisMap.setBaseLayer('dark');
+        else if (layer === 'moisture') gisMap.setBaseLayer('topo');
+        else if (layer === 'groundwater') gisMap.setBaseLayer('dark');
+      }
       visualizer.переключить_слой(layer);
     });
   });
@@ -141,8 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.classList.add('active');
       const nodeId = chip.dataset.node;
       if (nodeId === 'all') {
+        if (gisMap) gisMap.resetView();
         visualizer.setCameraForMap();
       } else {
+        if (gisMap) gisMap.focusOnNode(nodeId);
         visualizer.focusOnNode(nodeId);
       }
     });
@@ -964,6 +976,15 @@ document.addEventListener('DOMContentLoaded', () => {
       маловодный_год: sim.маловодный_год
     });
 
+    if (gisMap) {
+      gisMap.обновить_состояние({
+        уровень_модернизации: sim.уровень_модернизации,
+        кош_тепа_отбор_км3: sim.кош_тепа_отбор_км3,
+        засуха: sim.засуха,
+        маловодный_год: sim.маловодный_год
+      });
+    }
+
     // Нижние метрики
     metricDepletionRisk.textContent = data.риск_текст;
     if (sim.уровень_модернизации < 0.25) {
@@ -1038,37 +1059,70 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.глобальное_обновление = e.target.checked;
   });
 
-  // 5. Переключение 3D режимов
+  // 5. Переключение режимов картографии и 3D
   function setActiveViewBtn(btn) {
-    [btnViewMap, btnViewDual, btnViewMorph, btnViewDam].forEach(b => {
+    [btnViewSat, btnViewTopo, btnViewDark, btnViewDam, btnViewDual].forEach(b => {
       if (b) b.classList.remove('active');
     });
     if (btn) btn.classList.add('active');
   }
 
-  btnViewMap.addEventListener('click', () => {
-    setActiveViewBtn(btnViewMap);
-    visualizer.переключить_режим('MAP');
-    if (audioSynth) audioSynth.playRadarPing(880);
-  });
+  const gisMapEl = document.getElementById('gis-map');
+  const canvas3dEl = document.getElementById('canvas-3d');
 
-  btnViewDual.addEventListener('click', () => {
-    setActiveViewBtn(btnViewDual);
-    visualizer.переключить_режим('DUAL');
-    if (audioSynth) audioSynth.playRadarPing(700);
-  });
+  function showGisMap() {
+    if (gisMapEl) gisMapEl.style.display = 'block';
+    if (canvas3dEl) canvas3dEl.style.display = 'none';
+    if (gisMap && gisMap.map) gisMap.map.invalidateSize();
+  }
 
-  btnViewMorph.addEventListener('click', () => {
-    setActiveViewBtn(btnViewMorph);
-    visualizer.переключить_режим('MORPH');
-    if (audioSynth) audioSynth.playRadarPing(580);
-  });
+  function show3dCanvas() {
+    if (gisMapEl) gisMapEl.style.display = 'none';
+    if (canvas3dEl) canvas3dEl.style.display = 'block';
+  }
+
+  if (btnViewSat) {
+    btnViewSat.addEventListener('click', () => {
+      setActiveViewBtn(btnViewSat);
+      showGisMap();
+      if (gisMap) gisMap.setBaseLayer('satellite');
+      if (audioSynth) audioSynth.playRadarPing(880);
+    });
+  }
+
+  if (btnViewTopo) {
+    btnViewTopo.addEventListener('click', () => {
+      setActiveViewBtn(btnViewTopo);
+      showGisMap();
+      if (gisMap) gisMap.setBaseLayer('topo');
+      if (audioSynth) audioSynth.playRadarPing(820);
+    });
+  }
+
+  if (btnViewDark) {
+    btnViewDark.addEventListener('click', () => {
+      setActiveViewBtn(btnViewDark);
+      showGisMap();
+      if (gisMap) gisMap.setBaseLayer('dark');
+      if (audioSynth) audioSynth.playRadarPing(760);
+    });
+  }
 
   if (btnViewDam) {
     btnViewDam.addEventListener('click', () => {
       setActiveViewBtn(btnViewDam);
+      show3dCanvas();
       visualizer.переключить_режим('DAM');
-      if (audioSynth) audioSynth.playRadarPing(500);
+      if (audioSynth) audioSynth.playRadarPing(650);
+    });
+  }
+
+  if (btnViewDual) {
+    btnViewDual.addEventListener('click', () => {
+      setActiveViewBtn(btnViewDual);
+      show3dCanvas();
+      visualizer.переключить_режим('DUAL');
+      if (audioSynth) audioSynth.playRadarPing(700);
     });
   }
 

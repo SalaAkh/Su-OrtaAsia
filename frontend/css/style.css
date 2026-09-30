@@ -73,6 +73,159 @@ body {
   display: block;
 }
 
+.gis-map-viewport {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background: #060913;
+}
+
+/* ==========================================================================
+   ГИС СТИЛИ LEAFLET (СПУТНИКОВАЯ КАРТА ВЫСОКОГО РАЗРЕШЕНИЯ)
+   ========================================================================== */
+.leaflet-container {
+  background: #060913 !important;
+  font-family: var(--font-main) !important;
+}
+
+.gis-pin-node {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-core {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.7);
+  border: 1.5px solid #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  z-index: 2;
+}
+
+.pin-core:hover {
+  transform: scale(1.25);
+}
+
+.pin-pulse {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #00f0ff;
+  animation: mapPulse 2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes mapPulse {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.0); opacity: 0; }
+}
+
+.gis-city-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.city-dot {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border: 2px solid #0284c7;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+.city-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f8fafc;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.gis-iot-marker {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.iot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  border: 1.5px solid #fff;
+}
+
+.iot-radar-ring {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px dashed #10b981;
+  animation: iotSpin 4s linear infinite;
+}
+
+@keyframes iotSpin {
+  100% { transform: rotate(360deg); }
+}
+
+.gis-popup-card {
+  font-family: var(--font-main);
+  padding: 4px;
+}
+
+.gis-popup-card .p-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.gis-popup-card .p-desc {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.leaflet-tooltip.gis-custom-tooltip {
+  background: rgba(11, 19, 41, 0.92) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  font-family: var(--font-main) !important;
+  font-size: 0.75rem !important;
+  line-height: 1.35 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(0, 240, 255, 0.4) !important;
+}
+
 /* ==========================================================================
    ПЛАВАЮЩИЙ 4D ТАЙМЛАПС ХУД (TOP CENTER)
    ========================================================================== */
